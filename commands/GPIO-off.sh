@@ -1,0 +1,15 @@
+#!/bin/sh
+###########################################################
+# GPIO-Off.sh - Turn on one of the Pi's GPIO Outputs       #
+###########################################################
+
+# Set the GPIO number (NOT the pin number)
+#GPIO="64"
+GPIO="76"
+
+# Make sure the pin is setup for output.
+/opt/fpp/src/fpp -G ${GPIO},Output
+
+# Turn off the pin
+/opt/fpp/src/fpp -g ${GPIO},Output,0
+echo "PSU On Script"
