@@ -1,11 +1,11 @@
 [
-{ "name": "Template Plugin On",
-  "script": "on.sh",
+{ "name": "DynamicPixel-PSU On",
+  "script": "GPIO-on.sh",
   "args": [
   ]
 },
-{ "name": "Template Plugin Off",
-  "script": "off.sh",
+{ "name": "DynamicPixel-PSU Off",
+  "script": "GPIO-off.sh",
   "args": [
   ]
 }
