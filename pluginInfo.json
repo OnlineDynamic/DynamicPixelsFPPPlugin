@@ -1,15 +1,15 @@
 {
-	"repoName": "fpp-plugin-Template",
-	"name": "Template Plugin for FPP Plugin developers",
-	"author": "John Doe (jdoe)",
-	"description": "This template plugin is designed to make it easier for plugin authors to create new FPP Plugins.  You can manually clone the git repository or install the Template Plugin and then go to the plugin's config page and use the form to copy the template into a new plugin directory.",
-	"homeURL": "https://github.com/FalconChristmas/fpp-plugin-Template",
-	"srcURL": "https://github.com/FalconChristmas/fpp-plugin-Template.git",
-	"bugURL": "https://github.com/FalconChristmas/fpp-plugin-Template/issues",
+	"repoName": "fpp-plugin-DynamicPixels",
+	"name": "DynamicPixels Plugin for their range of controllers",
+	"author": "Stuart Ledingham (DynamicPixels)",
+	"description": "This plugin is designed to work with the DynamicPixel Range of controllers to bring in bespoke functionality to FPP for their use.",
+	"homeURL": "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin",
+	"srcURL": "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin.git",
+	"bugURL": "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin/issues",
 	"allowUpdates": 1,
 	"versions": [
 		{
-			"minFPPVersion": "2.0",
+			"minFPPVersion": "7.0",
 			"maxFPPVersion": "0",
 			"branch": "master",
 			"sha": "",
