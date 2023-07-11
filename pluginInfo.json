@@ -1,6 +1,6 @@
 {
 	"repoName": "fpp-plugin-DynamicPixels",
-	"name": "DynamicPixels Plugin for their range of controllers",
+	"name": "DynamicPixels Controller Plugin",
 	"author": "Stuart Ledingham (DynamicPixels)",
 	"description": "This plugin is designed to work with the DynamicPixel Range of controllers to bring in bespoke functionality to FPP for their use.",
 	"homeURL": "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin",
