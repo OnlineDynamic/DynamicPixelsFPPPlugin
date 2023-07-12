@@ -17,28 +17,26 @@ data.  The plugin name is used as-is in the endpoint URL, hyphens
 are not removed.  -- limonade.php is used for the underlying implementation so
 param("param1" ) can be used for an api like /api/plugin/fpp-BigButtons/:param1
 
-Here is a simple example which would add a
-/api/plugin/fpp-BigButtons/version endpoint to the fpp-Bigbuttons plugin.
 */
 
 
-function getEndpointsfppBigButtons() {
+function getEndpointsfppDynamicPixels() {
     $result = array();
 
     $ep = array(
         'method' => 'GET',
         'endpoint' => 'version',
-        'callback' => 'fppBigButtonsVersion');
+        'callback' => 'fppDynamicPixelsVersion');
 
     array_push($result, $ep);
 
     return $result;
 }
 
-// GET /api/plugin/fpp-BigButtons/version
-function fppBigButtonsVersion() {
+// GET /api/plugin/fpp-DynamicPixels/version
+function fppDynamicPixelsVersion() {
     $result = array();
-    $result['version'] = 'fpp-BigButtons v1.2.3';
+    $result['version'] = 'fpp-DynamicPixels v0.1';
 
     return json($result);
 }
