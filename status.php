@@ -1,1 +1,1 @@
-Template Plugin Status Page Placeholder
+DynamicPixels Controller Status Page Placeholder
