@@ -13,7 +13,7 @@
 
 $menuEntries = Array(
 	Array(
-		'text' => 'Template - Status',
+		'text' => 'D24 Controller - Status',
 		'type' => 'status',
 		'page' => 'status.php',
 		'wrap' => 1
@@ -31,19 +31,13 @@ $menuEntries = Array(
 #		'wrap' => 1
 #	),
 	Array(
-		'text' => 'Template - Help',
+		'text' => 'D24 Controller - Help',
 		'type' => 'help',
 		'page' => 'help/help.php',
 		'wrap' => 1
 	),
 	Array(
-		'text' => 'Template - Home',
-		'type' => 'help',
-		'page' => 'https://github.com/FalconChristmas/fpp-plugin-Template',
-		'wrap' => 1
-	),
-	Array(
-		'text' => 'Template - About',
+		'text' => 'DynamicPixels Plugin - About',
 		'type' => 'help',
 		'page' => 'about.php',
 		'wrap' => 1
