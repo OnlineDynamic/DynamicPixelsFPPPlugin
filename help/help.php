@@ -1,1 +1,1 @@
-Template Plugin Help Page Placeholder
+D24 Online User Manual
