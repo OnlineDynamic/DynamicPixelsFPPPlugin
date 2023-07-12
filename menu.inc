@@ -16,25 +16,29 @@ $menuEntries = Array(
 		'text' => 'D24 Controller - Status',
 		'type' => 'status',
 		'page' => 'status.php',
-		'wrap' => 1
+		'wrap' => 1,
+		'controllerModel' => 'D24'
 	),
 #	Array(
 #		'text' => 'Template - Content Setup',
 #		'type' => 'content',
 #		'page' => 'content.php',
-#		'wrap' => 1
+#		'wrap' => 1,
+#               'controllerModel' => 'D24'
 #	),
 #	Array(
 #		'text' => 'Template - Output',
 #		'type' => 'output',
 #		'page' => 'output.php',
-#		'wrap' => 1
+#		'wrap' => 1,
+#               'controllerModel' => 'D24'
 #	),
 	Array(
 		'text' => 'D24 Controller - Help',
 		'type' => 'help',
 		'page' => 'help/help.php',
-		'wrap' => 1
+		'wrap' => 1,
+		'controllerModel' => 'D24'
 	),
 	Array(
 		'text' => 'DynamicPixels Plugin - About',
