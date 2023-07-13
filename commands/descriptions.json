@@ -1,12 +1,12 @@
 [
 { "name": "DynamicPixel-PSU On",
   "script": "GPIO-on.sh",
-  "args": [
+  "args": [ "GPIO-Number"
   ]
 },
 { "name": "DynamicPixel-PSU Off",
   "script": "GPIO-off.sh",
-  "args": [
+  "args": [ "GPIO-Number"
   ]
 }
 ]
