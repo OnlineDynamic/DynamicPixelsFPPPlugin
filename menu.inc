@@ -59,6 +59,9 @@ foreach ($menuEntries as $entry)
 	if ($entry['type'] != $menu)
 		continue;
 
+	if ($entry['controllerModel'] != 'D24')
+		continue;
+
 	if (preg_match('/^http.?:\/\//', $entry['page']))
 	{
 		printf("<li><a href='%s' target='_blank'>%s</a></li>\n",
