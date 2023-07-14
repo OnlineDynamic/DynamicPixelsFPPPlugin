@@ -67,7 +67,7 @@ foreach ($menuEntries as $entry)
             $currentCapeInfo = $settings['cape-info'];
         }
 
-	if ($entry['controllerModel'] != $currentCapeInfo['name'] || "all")
+	if ($entry['controllerModel'] != ($currentCapeInfo['name'] || "all"))
 		continue;
 
 	if (preg_match('/^http.?:\/\//', $entry['page']))
