@@ -38,14 +38,21 @@ $menuEntries = Array(
 	Array(
 		'text' => 'D24 Controller - Help',
 		'type' => 'help',
-		'page' => 'help/help.php',
+		'page' => 'help/d24-help.php',
 		'wrap' => 1,
 		'controllerModel' => 'DynamicPixels-D24'
 	),
 	Array(
 		'text' => 'D12 Controller - Help',
 		'type' => 'help',
-		'page' => 'help/help.php',
+		'page' => 'help/d12-help.php',
+		'wrap' => 1,
+		'controllerModel' => 'DynamicPixels-D12'
+	),
+	Array(
+		'text' => 'D0/24 Controller - Help',
+		'type' => 'help',
+		'page' => 'help/d0-24-help.php',
 		'wrap' => 1,
 		'controllerModel' => 'DynamicPixels-D12'
 	),
