@@ -1,6 +1,6 @@
 <?php
-require_once '/common.php';
-require_once '/config.php';
+require_once 'common.php';
+require_once 'config.php';
 
 # $menuEntries is an array of menu entries for this plugin
 # text - menu entry text
@@ -80,6 +80,8 @@ foreach ($menuEntries as $entry)
         if (isset($settings['cape-info'])) {
             $currentCapeInfo = $settings['cape-info'];
         }
+
+printf($currentCapeInfo['name']);
 
 	if ($entry['controllerModel'] != ($currentCapeInfo['name'] || "all"))
 		continue;
