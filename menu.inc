@@ -77,11 +77,8 @@ foreach ($menuEntries as $entry)
 		continue;
 
         $currentCapeInfo = array();
-        if (isset($settings['cape-info'])) {
-            $currentCapeInfo = $settings['cape-info'];
-        }
 
-printf($currentCapeInfo['name']);
+        $currentCapeInfo = json_decode(file_get_contents("http://localhost/api/files/$type"), true);
 
 	if ($entry['controllerModel'] != ($currentCapeInfo['name'] || "all"))
 		continue;
