@@ -17,34 +17,35 @@ $menuEntries = Array(
 		'type' => 'status',
 		'page' => 'status.php',
 		'wrap' => 1,
-		'controllerModel' => 'D24'
+		'controllerModel' => 'DynamicPixels-D24'
 	),
 #	Array(
 #		'text' => 'Template - Content Setup',
 #		'type' => 'content',
 #		'page' => 'content.php',
 #		'wrap' => 1,
-#               'controllerModel' => 'D24'
+#               'controllerModel' => 'DynamicPixels-D24'
 #	),
 #	Array(
 #		'text' => 'Template - Output',
 #		'type' => 'output',
 #		'page' => 'output.php',
 #		'wrap' => 1,
-#               'controllerModel' => 'D24'
+#               'controllerModel' => 'DynamicPixels-D24'
 #	),
 	Array(
 		'text' => 'D24 Controller - Help',
 		'type' => 'help',
 		'page' => 'help/help.php',
 		'wrap' => 1,
-		'controllerModel' => 'D24'
+		'controllerModel' => 'DynamicPixels-D24'
 	),
 	Array(
 		'text' => 'DynamicPixels Plugin - About',
 		'type' => 'help',
 		'page' => 'about.php',
-		'wrap' => 1
+		'wrap' => 1,
+                'controllerModel' => 'all'
 	)
 );
 
@@ -59,15 +60,12 @@ foreach ($menuEntries as $entry)
 	if ($entry['type'] != $menu)
 		continue;
 
-$currentCapeInfo = array();
-if (isset($settings["cape-info"])) {
-    $currentCapeInfo = $settings["cape-info"];
-    if (isset($currentCapeInfo["hardwareType"])) {
-        $capeHardwareType = $currentCapeInfo["hardwareType"];
-    }
+        $currentCapeInfo = array();
+        if (isset($settings["cape-info"])) {
+            $currentCapeInfo = $settings["cape-info"];
+        }
 
-
-	if ($entry['controllerModel'] != 'D24')
+	if ($entry['controllerModel'] != $currentCapeInfo["name"] | "all")
 		continue;
 
 	if (preg_match('/^http.?:\/\//', $entry['page']))
