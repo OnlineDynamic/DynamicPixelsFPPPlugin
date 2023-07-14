@@ -47,7 +47,7 @@ $menuEntries = Array(
 		'type' => 'help',
 		'page' => 'help/help.php',
 		'wrap' => 1,
-		'controllerModel' => 'DynamicPixels-D24'
+		'controllerModel' => 'DynamicPixels-D12'
 	),
 	Array(
 		'text' => 'DynamicPixels Plugin - About',
