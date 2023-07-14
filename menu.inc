@@ -59,6 +59,14 @@ foreach ($menuEntries as $entry)
 	if ($entry['type'] != $menu)
 		continue;
 
+$currentCapeInfo = array();
+if (isset($settings["cape-info"])) {
+    $currentCapeInfo = $settings["cape-info"];
+    if (isset($currentCapeInfo["hardwareType"])) {
+        $capeHardwareType = $currentCapeInfo["hardwareType"];
+    }
+
+
 	if ($entry['controllerModel'] != 'D24')
 		continue;
 
