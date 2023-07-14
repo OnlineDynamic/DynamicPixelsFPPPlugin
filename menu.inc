@@ -43,6 +43,13 @@ $menuEntries = Array(
 		'controllerModel' => 'DynamicPixels-D24'
 	),
 	Array(
+		'text' => 'D12 Controller - Help',
+		'type' => 'help',
+		'page' => 'help/help.php',
+		'wrap' => 1,
+		'controllerModel' => 'DynamicPixels-D24'
+	),
+	Array(
 		'text' => 'DynamicPixels Plugin - About',
 		'type' => 'help',
 		'page' => 'about.php',
