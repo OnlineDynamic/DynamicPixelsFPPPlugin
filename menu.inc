@@ -1,4 +1,6 @@
 <?php
+require_once 'common.php';
+require_once 'config.php';
 
 # $menuEntries is an array of menu entries for this plugin
 # text - menu entry text
