@@ -28,13 +28,13 @@ $menuEntries = Array(
 #		'wrap' => 1,
 #               'controllerModel' => 'DynamicPixels-D24'
 #	),
-#	Array(
-#		'text' => 'Template - Output',
-#		'type' => 'output',
-#		'page' => 'output.php',
-#		'wrap' => 1,
-#               'controllerModel' => 'DynamicPixels-D24'
-#	),
+	Array(
+		'text' => 'DynamicPixels Controller - Config',
+		'type' => 'output',
+		'page' => 'DynPixconfig.php',
+		'wrap' => 1,
+                'controllerModel' => 'DynamicPixels-D24'
+	),
 	Array(
 		'text' => 'D24 Controller - Help',
 		'type' => 'help',
