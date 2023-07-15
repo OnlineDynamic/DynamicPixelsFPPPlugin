@@ -39,7 +39,7 @@
 
 #include "commands/Commands.h"
 
-#include "TPLinkSwitch.h"
+#include "DynamicPixelsPSUSwitch.h"
 #include "TPLinkItem.h"
 
 class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
@@ -82,7 +82,7 @@ public:
                 psuOn = args[1] == "true";
             }
 
-            plugin->SetSwitchState(psu_num, psuOn);
+            plugin->SetPSUState(psu_num, psuOn);
             return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
         }
         DynamicPixelsPlugin *plugin;
@@ -100,157 +100,71 @@ public:
     }
 
 #if FPP_MAJOR_VERSION < 4 || FPP_MINOR_VERSION < 1
-    virtual void modifyChannelData(int ms, uint8_t *seqData) override{
+    virtual void modifyChannelData(int ms, uint8_t *seqData) override
+    {
 #else
     virtual void modifySequenceData(int ms, uint8_t *seqData) override
     {
 #endif
-        try {
-            sendChannelData(seqData);
-} catch (std::exception const &ex)
-{
-    std::cout << ex.what();
-}
-}
-
-virtual void playlistCallback(const Json::Value &playlist, const std::string &action, const std::string &section, int item)
-{
-    if (settings["Start"] == "PlaylistStart" && action == "start")
-    {
-        EnableTPLinkItems();
-    }
-}
-
-void EnableTPLinkItems()
-{
-    for (auto &output : _TPLinkOutputs)
-    {
-        output->EnableOutput();
-    }
-}
-
-void sendChannelData(unsigned char *data)
-{
-    for (auto &output : _TPLinkOutputs)
-    {
-        output->SendData(data);
-    }
-}
-
-void saveDataToFile()
-{
-    std::ofstream outfile;
-#if FPP_MAJOR_VERSION < 6
-    outfile.open("/home/fpp/media/config/fpp-plugin-dynamicpixels");
-#else
-        outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
-#endif
-
-    if (_TPLinkOutputs.size() == 0)
-    {
-        outfile << "nooutputsfound;1;null";
-        outfile << "\n";
-    }
-
-    for (auto &out : _TPLinkOutputs)
-    {
-        outfile << out->GetIPAddress();
-        outfile << ";";
-        outfile << out->GetStartChannel();
-        outfile << ";";
-        outfile << out->GetType();
-        outfile << "\n";
-    }
-    outfile.close();
-}
-
-void readFiles()
-{
-    // read topic, payload and start channel settings from JSON setting file.
-#if FPP_MAJOR_VERSION < 6
-    std::string configLocation = ("/home/fpp/media/config/plugin.tplink.json");
-#else
-        std::string configLocation = FPP_DIR_CONFIG("/plugin.tplink.json");
-#endif
-    if (LoadJsonFromFile(configLocation, config))
-    {
-        for (unsigned int i = 0; i < config.size(); i++)
+        try
         {
-            std::string const ip = config[i]["ip"].asString();
-            std::string const devicetype = config[i].get("devicetype", "light").asString();
-            unsigned int sc = config[i].get("startchannel", 1).asInt();
-            if (!ip.empty())
-            {
-                std::unique_ptr<TPLinkItem> tplinkItem;
-                if (devicetype.find("light") != std::string::npos)
-                {
-                    tplinkItem = std::make_unique<TPLinkLight>(ip, sc);
-                }
-                else if (devicetype.find("switch") != std::string::npos)
-                {
-                    int const plugNum = config[i].get("plugnumber", 0).asInt();
-                    tplinkItem = std::make_unique<TPLinkSwitch>(ip, sc, plugNum);
-                }
-                else
-                {
-                    LogInfo(VB_PLUGIN, "Devicetype not found '%s'", devicetype.c_str());
-                    tplinkItem = std::make_unique<TPLinkLight>(ip, sc);
-                }
-                LogInfo(VB_PLUGIN, "Added %s\n", tplinkItem->GetConfigString().c_str());
-                _TPLinkOutputs.push_back(std::move(tplinkItem));
-            }
+            sendChannelData(seqData);
+        }
+        catch (std::exception const &ex)
+        {
+            std::cout << ex.what();
         }
     }
-    saveDataToFile();
-}
 
-std::string getTopics()
-{
-    std::string topics;
-    for (auto &out : _TPLinkOutputs)
+    void EnableTPLinkItems()
     {
-        topics += out->GetIPAddress();
-        topics += ",";
+        for (auto &output : _TPLinkOutputs)
+        {
+            output->EnableOutput();
+        }
     }
-    return topics;
-}
 
-void SetSwitchState(std::string const &ip, bool state, int plug_num)
-{
-    TPLinkSwitch tplinkSwitch(ip, 1, plug_num);
-    if (state)
+    void saveDataToFile()
     {
-        tplinkSwitch.setRelayOn();
+        std::ofstream outfile;
+
+        outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
+
+        if (_TPLinkOutputs.size() == 0)
+        {
+            outfile << "nooutputsfound;1;null";
+            outfile << "\n";
+        }
+
+        for (auto &out : _TPLinkOutputs)
+        {
+            outfile << out->GetIPAddress();
+            outfile << ";";
+            outfile << out->GetStartChannel();
+            outfile << ";";
+            outfile << out->GetType();
+            outfile << "\n";
+        }
+        outfile.close();
     }
-    else
+
+    void SetPSUState(std::string const &ip, bool state, int plug_num)
     {
-        tplinkSwitch.setRelayOff();
+        TPLinkSwitch tplinkSwitch(ip, 1, plug_num);
+        if (state)
+        {
+            tplinkSwitch.setRelayOn();
+        }
+        else
+        {
+            tplinkSwitch.setRelayOff();
+        }
     }
-}
 
-void SetLightOnRGB(std::string const &ip, uint8_t r, uint8_t g, uint8_t b, int color_temp, int period)
-{
-    TPLinkLight tplinkLight(ip, 1);
-    tplinkLight.setLightOnRGB(r, g, b, color_temp, period);
-}
-
-void SetLightOnHSV(std::string const &ip, int hue, int sat, int bright, int color_temp, int period)
-{
-    TPLinkLight tplinkLight(ip, 1);
-    tplinkLight.setLightOnHSV(hue, sat, bright, color_temp, period);
-}
-
-void SetLightOff(std::string const &ip)
-{
-    TPLinkLight tplinkLight(ip, 1);
-    tplinkLight.setLightOff();
-}
-};
-
-extern "C"
-{
-    FPPPlugin *createPlugin()
+    extern "C"
     {
-        return new DynamicPixelsPlugin();
+        FPPPlugin *createPlugin()
+        {
+            return new DynamicPixelsPlugin();
+        }
     }
-}
