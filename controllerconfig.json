@@ -3,6 +3,9 @@
 	"versions": [
 		{
 			"version": "0.4",
+			"PSU1enablepin": "",
+			"PSU2enablepin": "",
+			"PSU3enablepin": "",
 		}
 		
 	]
