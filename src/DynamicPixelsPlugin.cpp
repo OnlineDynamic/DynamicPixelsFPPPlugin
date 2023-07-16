@@ -40,12 +40,11 @@
 #include "commands/Commands.h"
 
 #include "DynamicPixelsPSUSwitch.h"
-#include "TPLinkItem.h"
+#include "DynamicPixelsItem.h"
 
-class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
-{
+class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource {
 private:
-    std::vector<std::unique_ptr<TPLinkItem>> _TPLinkOutputs;
+    std::vector<std::unique_ptr<DynamicPixelsItem>> _DynamicPixelsOutputs;
     Json::Value config;
 
 public:
@@ -57,7 +56,7 @@ public:
     }
     virtual ~DynamicPixelsPlugin()
     {
-        _TPLinkOutputs.clear();
+        _DynamicPixelsOutputs.clear();
     }
 
     class DynamicPixelsPSUCommand : public Command
@@ -99,13 +98,9 @@ public:
         return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
     }
 
-#if FPP_MAJOR_VERSION < 4 || FPP_MINOR_VERSION < 1
-    virtual void modifyChannelData(int ms, uint8_t *seqData) override
-    {
-#else
+
     virtual void modifySequenceData(int ms, uint8_t *seqData) override
     {
-#endif
         try
         {
             sendChannelData(seqData);
@@ -116,9 +111,9 @@ public:
         }
     }
 
-    void EnableTPLinkItems()
+    void EnableDynamicPixelsItems()
     {
-        for (auto &output : _TPLinkOutputs)
+        for (auto &output : _DynamicPixelsOutputs)
         {
             output->EnableOutput();
         }
@@ -130,13 +125,13 @@ public:
 
         outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
 
-        if (_TPLinkOutputs.size() == 0)
+        if (_DynamicPixelsOutputs.size() == 0)
         {
             outfile << "nooutputsfound;1;null";
             outfile << "\n";
         }
 
-        for (auto &out : _TPLinkOutputs)
+        for (auto &out : _DynamicPixelsOutputs)
         {
             outfile << out->GetIPAddress();
             outfile << ";";
@@ -150,14 +145,14 @@ public:
 
     void SetPSUState(std::string const &ip, bool state, int plug_num)
     {
-        TPLinkSwitch tplinkSwitch(ip, 1, plug_num);
+        DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(ip, 1, plug_num);
         if (state)
         {
-            tplinkSwitch.setRelayOn();
+            DynamicPixelsPSUSwitch.setPSUOn();
         }
         else
         {
-            tplinkSwitch.setRelayOff();
+            DynamicPixelsPSUSwitch.setPSUOff();
         }
     }
 
