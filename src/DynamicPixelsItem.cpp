@@ -23,8 +23,8 @@
 DynamicPixelsItem::DynamicPixelsItem(std::string const& itemname) :
     m_name(itemname),
 {
-    m_GPIONumber = getPinByName(itemname);
-    LogInfo(VB_PLUGIN, itemname + " is gpio number: " + m_GPIONumber);
+    m_GPIONumber = PinCapabilities::getPinByName(itemname).ptr();
+    LogInfo(VB_PLUGIN, "%d is gpio number: %d",itemname, m_GPIONumber);
 }
 
 DynamicPixelsItem::~DynamicPixelsItem() {
