@@ -58,7 +58,7 @@ public:
     {
         _DynamicPixelsOutputs.clear();
     }
-
+}
     class DynamicPixelsPSUCommand : public Command
     {
     public:
@@ -163,4 +163,3 @@ public:
             return new DynamicPixelsPlugin();
         }
     }
-}
