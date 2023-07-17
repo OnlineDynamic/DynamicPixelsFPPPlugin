@@ -19,7 +19,7 @@
 #include <istream>
 #include <ostream>
 
-DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string const &ip, unsigned int startChannel, int plug_num) : DynamicPixelsItem(ip, startChannel),
+DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string int psu_num) : DynamicPixelsItem(itemname),
                                                                                                                  m_psu_num(psu_num)
 {
     m_deviceId = getDeviceId(plug_num);

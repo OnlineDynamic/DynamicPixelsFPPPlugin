@@ -133,17 +133,17 @@ public:
 
         for (auto &out : _DynamicPixelsOutputs)
         {
-            outfile << out->GetIPAddress();
-            outfile << ";";
-            outfile << out->GetStartChannel();
-            outfile << ";";
-            outfile << out->GetType();
-            outfile << "\n";
+            // outfile << out->GetIPAddress();
+            // outfile << ";";
+            // outfile << out->GetStartChannel();
+            // outfile << ";";
+            // outfile << out->GetType();
+            // outfile << "\n";
         }
         outfile.close();
     }
 
-    void SetPSUState(std::string int psu_num, bool psuOn)
+    void SetPSUState(int psu_num, bool psuOn)
     {
         DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(psu_num, psuOn);
         if (psuOn)
@@ -163,3 +163,4 @@ public:
             return new DynamicPixelsPlugin();
         }
     }
+}

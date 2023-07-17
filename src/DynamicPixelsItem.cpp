@@ -18,7 +18,7 @@
 #include <istream>
 #include <ostream>
 
-#include "utils/GPIOUtils.h"
+#include "util/GPIOUtils.h"
 
 DynamicPixelsItem::DynamicPixelsItem(std::string const& itemname) :
     m_name(itemname),
