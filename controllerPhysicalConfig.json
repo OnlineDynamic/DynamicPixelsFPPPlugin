@@ -1,12 +1,95 @@
 {
-	"name": "DynamicPixels-D24",
-	"versions": [
+	"models": [
 		{
-			"version": "0.4",
-			"PSU1enablepin": "",
-			"PSU2enablepin": "",
-			"PSU3enablepin": "",
+			"name": "DynamicPixels-D24",
+			"type": "controller",
+			"versions": [
+				{
+					"version": "0.5",
+					"configitems": [
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU1",
+							"DeviceId": "1-0039-1",
+							"portStart": 1,
+							"portEnd": 8,
+							"maxCurrent": 30
+						},
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU2",
+							"DeviceId": "1-0039-2",
+							"portStart": 9,
+							"portEnd": 16,
+							"maxCurrent": 30
+						},
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU3",
+							"DeviceId": "1-0039-3",
+							"portStart": 17,
+							"portEnd": 24,
+							"maxCurrent": 30
+						}
+					]
+				},
+				{
+					"version": "0.4",
+					"configitems": [
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU1",
+							"DeviceId": "1-0039-1",
+							"portStart": 1,
+							"portEnd": 8,
+							"maxCurrent": 30
+						},
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU2",
+							"DeviceId": "1-0039-2",
+							"portStart": 9,
+							"portEnd": 16,
+							"maxCurrent": 30
+						},
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU3",
+							"DeviceId": "1-0039-3",
+							"portStart": 17,
+							"portEnd": 24,
+							"maxCurrent": 30
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "DynamicPixels-D12-12",
+			"type": "controller",
+			"versions": [
+				{
+					"version": "0.1",
+					"configitems": [
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU1",
+							"DeviceId": "1-0039-1",
+							"portStart": 1,
+							"portEnd": 6,
+							"maxCurrent": 30
+						},
+						{
+							"itemtype": "PSUController",
+							"itemname": "PSU1",
+							"DeviceId": "1-0039-1",
+							"portStart": 7,
+							"portEnd": 12,
+							"maxCurrent": 30
+						}
+					]
+				}
+			]
 		}
-		
 	]
 }

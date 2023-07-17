@@ -92,32 +92,32 @@ public:
         CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUCommand(this));
     }
 
-    virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
-    {
-        std::string v = getTopics();
-        return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
-    }
+    // virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
+    // {
+    //     std::string v = getTopics();
+    //     return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
+    // }
 
 
-    virtual void modifySequenceData(int ms, uint8_t *seqData) override
-    {
-        try
-        {
-            sendChannelData(seqData);
-        }
-        catch (std::exception const &ex)
-        {
-            std::cout << ex.what();
-        }
-    }
+    // virtual void modifySequenceData(int ms, uint8_t *seqData) override
+    // {
+    //     try
+    //     {
+    //         sendChannelData(seqData);
+    //     }
+    //     catch (std::exception const &ex)
+    //     {
+    //         std::cout << ex.what();
+    //     }
+    // }
 
-    void EnableDynamicPixelsItems()
-    {
-        for (auto &output : _DynamicPixelsOutputs)
-        {
-            output->EnableOutput();
-        }
-    }
+    // void EnableDynamicPixelsItems()
+    // {
+    //     for (auto &output : _DynamicPixelsOutputs)
+    //     {
+    //         output->EnableOutput();
+    //     }
+    // }
 
     void saveDataToFile()
     {
@@ -143,10 +143,10 @@ public:
         outfile.close();
     }
 
-    void SetPSUState(std::string const &ip, bool state, int plug_num)
+    void SetPSUState(std::string int psu_num, bool psuOn)
     {
-        DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(ip, 1, plug_num);
-        if (state)
+        DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(psu_num, psuOn);
+        if (psuOn)
         {
             DynamicPixelsPSUSwitch.setPSUOn();
         }
