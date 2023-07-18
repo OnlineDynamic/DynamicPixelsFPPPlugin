@@ -29,7 +29,7 @@ $pluginJson = convertAndGetSettings();
 
 <div id="global" class="settings">
 <fieldset>
-<legend>Dynamic Pixels Controller(Cape) Config</legend>
+<legend>Dynamic Pixels Controller (Cape) Config</legend>
 
 <script>
 
@@ -38,6 +38,7 @@ var dynamicpixelsConfig = <? echo json_encode($pluginJson, JSON_PRETTY_PRINT); ?
 
 var uniqueId = 1;
 var modelOptions = "";
+
 function AdddynamicpixelsItem(type) {
     var id = $("#dynamicpixelsTableBody > tr").length + 1;
     var html = "<tr class='fppTableRow";
@@ -45,15 +46,15 @@ function AdddynamicpixelsItem(type) {
         html += " oddRow'";
     }
     html += "'><td class='colNumber rowNumber'>" + id + ".</td><td><span style='display: none;' class='uniqueId'>" + uniqueId + "</span></td>";
-    html += "<td><input type='text' minlength='7' maxlength='15' size='15' pattern='^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$' class='ipaddress' /></td>";
-    html += "<td><input type='number' value='1' min='1' max='10000000' class='startchan' />";
     html += "<td><select class='devicetype'>";
-    html += "<option value='PSU Control'";
-    if(type == 'PSU Control') {html += " selected ";}
+    html += "<option value='PSUControl'";
+    if(type == 'PSUControl') {html += " selected ";}
     //html += ">Light</option><option value='switch'";
     //if(type == 'switch') {html += " selected ";}
-    html += ">Switch/Plug</option></select>";
-    html += "<td><input type='number' value='0' min='0' max='10' class='plugnum' />";
+    html += ">PSUControl</option></select>";
+    html += "<td><input type='text' minlength='7' maxlength='15' size='15' pattern='^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$' class='itemname' /></td>";
+    html += "<td><input type='number' value='1' min='1' max='3' class='psu_num' />";
+    html += "<td><input type='number' value='0' min='0' max='30' class='max_current' />";
     html += "</tr>";
     //selected
     $("#dynamicpixelsTableBody").append(html);
@@ -67,17 +68,17 @@ function AdddynamicpixelsItem(type) {
 }
 
 function SavedynamicpixelsItem(row) {
-    var ip = $(row).find('.ipaddress').val();
-    var startchan = parseInt($(row).find('.startchan').val(),10);
+    var itemname = $(row).find('.itemname').val();
+    var psu_num = parseInt($(row).find('.psu_num').val(),10);
 
-    var plugnum = parseInt($(row).find('.plugnum').val(),10);
+    var max_current = parseInt($(row).find('.max_current').val(),10);
 	var devicetype = $(row).find('.devicetype').val();
 
     var json = {
-        "ip": ip,
-        "startchannel": startchan,
+        "itemname": itemname,
+        "psu_num": psu_num,
         "devicetype": devicetype,
-        "plugnumber": plugnum
+        "max_current": max_current
     };
     return json;
 }
@@ -147,7 +148,7 @@ $(document).ready(function() {
 <table border=0>
 <tr><td colspan='2'>
         <input type="button" value="Save" class="buttons genericButton" onclick="SavedynamicpixelsItems();">
-        <input type="button" value="Add" class="buttons genericButton" onclick="AdddynamicpixelsItem('light');">
+        <input type="button" value="Add" class="buttons genericButton" onclick="AdddynamicpixelsItem('PSUControl');">
         <input id="delButton" type="button" value="Delete" class="deleteEventButton disableButtons genericButton" onclick="RemovedynamicpixelsItem();">
     </td>
 </tr>
@@ -156,7 +157,7 @@ $(document).ready(function() {
 <div class='fppTableWrapper fppTableWrapperAsTable'>
 <div class='fppTableContents'>
 <table class="fppTable" id="dynamicpixelsTable"  width='100%'>
-<thead><tr class="fppTableHeader"><th>#</th><th></th><th>Item Type</th><th>Item Name</th><th>Max Current</th></tr></thead>
+<thead><tr class="fppTableHeader"><th>#</th><th></th><th>Item Type</th><th>Item Name</th><th>PSU #</th><th>Max Current</th></tr></thead>
 <tbody id='dynamicpixelsTableBody'>
 </tbody>
 </table>
@@ -172,9 +173,9 @@ $(document).ready(function() {
 
 $.each(dynamicpixelsConfig, function( key, val ) {
     var row = AdddynamicpixelsItem(val["devicetype"]);
-    $(row).find('.ipaddress').val(val["ip"]);
-    $(row).find('.startchan').val(val["startchannel"]);
-    $(row).find('.plugnum').val(val["plugnumber"]);
+    $(row).find('.itemname').val(val["itemname"]);
+    $(row).find('.psu_num').val(val["psu_num"]);
+    $(row).find('.max_current').val(val["max_current"]);
 });
 </script>
 

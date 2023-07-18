@@ -45,7 +45,7 @@
 class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
 {
 private:
-    std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
+    std::vector<std::unique_ptr<DynamicPixelsItem>> _DynamicPixelsOutputs;
     Json::Value config;
 
 public:
@@ -65,7 +65,7 @@ public:
     public:
         DynamicPixelsPSUSwitchCommand(DynamicPixelsPlugin *p) : Command("Dynamic Pixels PSU Control"), plugin(p)
         {
-            args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(0, 4).setDefaultValue("1"));
+            args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(1, 4).setDefaultValue("1"));
             args.push_back(CommandArg("state", "bool", "Set PSU On or Off").setDefaultValue("true"));
         }
 
@@ -79,10 +79,10 @@ public:
             }
             if (args.size() >= 2)
             {
-                psuOn = args[1] == "true";
+                psuOn = (args[1]=="1");
             }
             std::string itemname = "PSU1";
-            plugin->SetPSUState(itemname,psu_num, psuOn);
+            plugin->SetPSUState(itemname, psu_num, psuOn);
             return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
         }
         DynamicPixelsPlugin *plugin;
@@ -93,7 +93,6 @@ public:
         CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUSwitchCommand(this));
     }
 
-
     void readFiles()
     {
         // read topic, payload and start channel settings from JSON setting file.
@@ -102,29 +101,29 @@ public:
         {
             for (unsigned int i = 0; i < config.size(); i++)
             {
-                std::string const ip = config[i]["ip"].asString();
-                std::string const devicetype = config[i].get("devicetype", "light").asString();
+                std::string const itemname = config[i]["itemname"].asString();
+                std::string const devicetype = config[i].get("devicetype", "PSUController").asString();
                 unsigned int sc = config[i].get("startchannel", 1).asInt();
-                if (!ip.empty())
+                if (!itemname.empty())
                 {
                     std::unique_ptr<DynamicPixelsItem> dynamicpixelsItem;
                     if (devicetype.find("light") != std::string::npos)
                     {
-                //        dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
+                        //        dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
                     }
-                    else if (devicetype.find("switch") != std::string::npos)
+                    else if (devicetype.find("PSUController") != std::string::npos)
                     {
-                        int const plugNum = config[i].get("plugnumber", 0).asInt();
-                        std::string itemname = "testing";
-                        int psu_num =1;
+                        int const psu_num = config[i].get("psu_num", 0).asInt();
+                        std::string itemname = config[i]["itemname"].asString();
+                        
                         dynamicpixelsItem = std::make_unique<DynamicPixelsPSUSwitch>(itemname, psu_num);
                     }
                     else
                     {
                         LogInfo(VB_PLUGIN, "Devicetype not found '%s'", devicetype.c_str());
-                        //dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
+                        // dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
                     }
-                //    LogInfo(VB_PLUGIN, "Added %s\n", dynamicpixelsItem->GetConfigString().c_str());
+                       // LogInfo(VB_PLUGIN, "Added %s\n", dynamicpixelsItem->GetConfigString().c_str());
                     _DynamicPixelsOutputs.push_back(std::move(dynamicpixelsItem));
                 }
             }
