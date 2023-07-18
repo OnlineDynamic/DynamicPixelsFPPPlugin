@@ -119,6 +119,7 @@ public:
     //     }
     // }
 
+};
     void saveDataToFile()
     {
         std::ofstream outfile;
@@ -155,7 +156,7 @@ public:
             DynamicPixelsPSUSwitch.setPSUOff();
         }
     }
-};
+
 
 extern "C"
 {
