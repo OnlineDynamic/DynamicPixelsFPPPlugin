@@ -34,9 +34,11 @@ DynamicPixelsPSUSwitch::~DynamicPixelsPSUSwitch()
 std::string DynamicPixelsPSUSwitch::setPSUOn()
 {
     // set PSU On
+    return "";
 }
 
 std::string DynamicPixelsPSUSwitch::setPSUOff()
 {
     // set PSU Off
+    return "";
 }

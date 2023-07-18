@@ -1,5 +1,19 @@
 
-<?
+<?php
+
+include_once "/opt/fpp/www/common.php";
+include_once 'functions.inc.php';
+include_once 'version.inc';
+
+
+$pluginName = basename(dirname(__FILE__));
+
+$logFile = $settings['logDirectory']."/".$pluginName.".log";
+
+
+$gitURL = "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin.git";
+
+
 function returnIfExists($json, $setting) {
     if ($json == null) {
         return "";
