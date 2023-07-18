@@ -60,101 +60,102 @@ public:
         _DynamicPixelsOutputs.clear();
     }
 
-class DynamicPixelsPSUCommand : public Command
-{
-public:
-    DynamicPixelsPSUCommand(DynamicPixelsPlugin *p) : Command("Dynamic Pixels PSU Control"), plugin(p)
+    class DynamicPixelsPSUCommand : public Command
     {
-        args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(0, 255).setDefaultValue("0"));
-        args.push_back(CommandArg("state", "bool", "Set PSU On or Off").setDefaultValue("true"));
-    }
-
-    virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
-    {
-        bool psuOn = true;
-        int psu_num = 0;
-        if (args.size() >= 3)
+    public:
+        DynamicPixelsPSUCommand(DynamicPixelsPlugin *p) : Command("Dynamic Pixels PSU Control"), plugin(p)
         {
-            psu_num = std::stoi(args[0]);
-        }
-        if (args.size() >= 2)
-        {
-            psuOn = args[1] == "true";
+            args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(0, 255).setDefaultValue("0"));
+            args.push_back(CommandArg("state", "bool", "Set PSU On or Off").setDefaultValue("true"));
         }
 
-        plugin->SetPSUState(psu_num, psuOn);
-        return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
+        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
+        {
+            bool psuOn = true;
+            int psu_num = 0;
+            if (args.size() >= 3)
+            {
+                psu_num = std::stoi(args[0]);
+            }
+            if (args.size() >= 2)
+            {
+                psuOn = args[1] == "true";
+            }
+
+            plugin->SetPSUState(psu_num, psuOn);
+            return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
+        }
+        DynamicPixelsPlugin *plugin;
+    };
+
+    void registerCommand()
+    {
+        CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUCommand(this));
     }
-    DynamicPixelsPlugin *plugin;
+
+    // virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
+    // {
+    //     std::string v = getTopics();
+    //     return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
+    // }
+
+    // virtual void modifySequenceData(int ms, uint8_t *seqData) override
+    // {
+    //     try
+    //     {
+    //         sendChannelData(seqData);
+    //     }
+    //     catch (std::exception const &ex)
+    //     {
+    //         std::cout << ex.what();
+    //     }
+    // }
+
+    // void EnableDynamicPixelsItems()
+    // {
+    //     for (auto &output : _DynamicPixelsOutputs)
+    //     {
+    //         output->EnableOutput();
+    //     }
+    // }
+
+    void saveDataToFile()
+    {
+        std::ofstream outfile;
+
+        outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
+
+        if (_DynamicPixelsOutputs.size() == 0)
+        {
+            outfile << "nooutputsfound;1;null";
+            outfile << "\n";
+        }
+
+        for (auto &out : _DynamicPixelsOutputs)
+        {
+            // outfile << out->GetIPAddress();
+            // outfile << ";";
+            // outfile << out->GetStartChannel();
+            // outfile << ";";
+            // outfile << out->GetType();
+            // outfile << "\n";
+        }
+        outfile.close();
+    }
+
+    void SetPSUState(int psu_num, bool psuOn)
+    {
+        DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(psu_num, psuOn);
+        if (psuOn)
+        {
+            DynamicPixelsPSUSwitch.setPSUOn();
+        }
+        else
+        {
+            DynamicPixelsPSUSwitch.setPSUOff();
+        }
+    }
 };
-
-void registerCommand()
-{
-    CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUCommand(this));
-}
-
-// virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
-// {
-//     std::string v = getTopics();
-//     return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
-// }
-
-// virtual void modifySequenceData(int ms, uint8_t *seqData) override
-// {
-//     try
-//     {
-//         sendChannelData(seqData);
-//     }
-//     catch (std::exception const &ex)
-//     {
-//         std::cout << ex.what();
-//     }
-// }
-
-// void EnableDynamicPixelsItems()
-// {
-//     for (auto &output : _DynamicPixelsOutputs)
-//     {
-//         output->EnableOutput();
-//     }
-// }
-
-void saveDataToFile()
-{
-    std::ofstream outfile;
-
-    outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
-
-    if (_DynamicPixelsOutputs.size() == 0)
-    {
-        outfile << "nooutputsfound;1;null";
-        outfile << "\n";
-    }
-
-    for (auto &out : _DynamicPixelsOutputs)
-    {
-        // outfile << out->GetIPAddress();
-        // outfile << ";";
-        // outfile << out->GetStartChannel();
-        // outfile << ";";
-        // outfile << out->GetType();
-        // outfile << "\n";
-    }
-    outfile.close();
-}
-
-void SetPSUState(int psu_num, bool psuOn)
-{
-    DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(psu_num, psuOn);
-    if (psuOn)
-    {
-        DynamicPixelsPSUSwitch.setPSUOn();
-    }
-    else
-    {
-        DynamicPixelsPSUSwitch.setPSUOff();
-    }
-}
 
 extern "C"
 {
