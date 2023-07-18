@@ -29,7 +29,7 @@ $pluginJson = convertAndGetSettings();
 
 <div id="global" class="settings">
 <fieldset>
-<legend>FPP Dynamic Pixels Config</legend>
+<legend>Dynamic Pixels Controller(Cape) Config</legend>
 
 <script>
 
@@ -48,10 +48,10 @@ function AdddynamicpixelsItem(type) {
     html += "<td><input type='text' minlength='7' maxlength='15' size='15' pattern='^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$' class='ipaddress' /></td>";
     html += "<td><input type='number' value='1' min='1' max='10000000' class='startchan' />";
     html += "<td><select class='devicetype'>";
-    html += "<option value='light'";
-    if(type == 'light') {html += " selected ";}
-    html += ">Light</option><option value='switch'";
-    if(type == 'switch') {html += " selected ";}
+    html += "<option value='PSU Control'";
+    if(type == 'PSU Control') {html += " selected ";}
+    //html += ">Light</option><option value='switch'";
+    //if(type == 'switch') {html += " selected ";}
     html += ">Switch/Plug</option></select>";
     html += "<td><input type='number' value='0' min='0' max='10' class='plugnum' />";
     html += "</tr>";
