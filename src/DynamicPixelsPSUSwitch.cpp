@@ -9,18 +9,18 @@
 #include <thread>
 #include <cmath>
 
-#include <stdint.h>     // for uint16_t, uint8_t, uint32_t
-#include <stdio.h>      // for printf
-#include <unistd.h>     // for close, read
-#include <string>       // for string
-#include <cstring>      // for ??? memcpy, memset, strncpy
+#include <stdint.h> // for uint16_t, uint8_t, uint32_t
+#include <stdio.h>  // for printf
+#include <unistd.h> // for close, read
+#include <string>   // for string
+#include <cstring>  // for ??? memcpy, memset, strncpy
 
 #include <iostream>
 #include <istream>
 #include <ostream>
 
 DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string int psu_num) : DynamicPixelsItem(itemname),
-                                                                                                                 m_psu_num(psu_num)
+                                                                          m_psu_num(psu_num)
 {
     m_deviceId = getDeviceId(plug_num);
 }
@@ -28,9 +28,6 @@ DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string int psu_num) : Dynami
 DynamicPixelsPSUSwitch::~DynamicPixelsPSUSwitch()
 {
 }
-
-
-
 
 std::string DynamicPixelsPSUSwitch::setPSUOn()
 {
