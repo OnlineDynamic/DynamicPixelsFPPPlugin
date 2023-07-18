@@ -6,7 +6,7 @@
 
 class DynamicPixelsPSUSwitch : public DynamicPixelsItem{
 public:
-    DynamicPixelsPSUSwitch(int psu_num );
+    DynamicPixelsPSUSwitch(std::string const& itemname, int psu_num);
     virtual ~DynamicPixelsPSUSwitch();
 
     std::string setPSUOn();

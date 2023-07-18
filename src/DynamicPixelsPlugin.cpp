@@ -45,7 +45,7 @@
 class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
 {
 private:
-    std::vector<std::unique_ptr<DynamicPixelsItem>> _DynamicPixelsOutputs;
+    std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
     Json::Value config;
 
 public:
@@ -81,8 +81,8 @@ public:
             {
                 psuOn = args[1] == "true";
             }
-
-            plugin->SetPSUState(psu_num, psuOn);
+            std::string itemname = "PSU1";
+            plugin->SetPSUState(itemname,psu_num, psuOn);
             return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
         }
         DynamicPixelsPlugin *plugin;
@@ -93,33 +93,45 @@ public:
         CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUCommand(this));
     }
 
-    // virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
-    // {
-    //     std::string v = getTopics();
-    //     return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
-    // }
 
-    // virtual void modifySequenceData(int ms, uint8_t *seqData) override
-    // {
-    //     try
-    //     {
-    //         sendChannelData(seqData);
-    //     }
-    //     catch (std::exception const &ex)
-    //     {
-    //         std::cout << ex.what();
-    //     }
-    // }
+    void readFiles()
+    {
+        // read topic, payload and start channel settings from JSON setting file.
+        std::string configLocation = FPP_DIR_CONFIG("/plugin.dynamicpixels.json");
+        if (LoadJsonFromFile(configLocation, config))
+        {
+            for (unsigned int i = 0; i < config.size(); i++)
+            {
+                std::string const ip = config[i]["ip"].asString();
+                std::string const devicetype = config[i].get("devicetype", "light").asString();
+                unsigned int sc = config[i].get("startchannel", 1).asInt();
+                if (!ip.empty())
+                {
+                    std::unique_ptr<DynamicPixelsItem> dynamicpixelsItem;
+                    if (devicetype.find("light") != std::string::npos)
+                    {
+                //        dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
+                    }
+                    else if (devicetype.find("switch") != std::string::npos)
+                    {
+                        int const plugNum = config[i].get("plugnumber", 0).asInt();
+                        std::string itemname = "testing";
+                        int psu_num =1;
+                        dynamicpixelsItem = std::make_unique<DynamicPixelsPSUSwitch>(itemname, psu_num);
+                    }
+                    else
+                    {
+                        LogInfo(VB_PLUGIN, "Devicetype not found '%s'", devicetype.c_str());
+                        //dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
+                    }
+                //    LogInfo(VB_PLUGIN, "Added %s\n", dynamicpixelsItem->GetConfigString().c_str());
+                    _DynamicPixelsOutputs.push_back(std::move(dynamicpixelsItem));
+                }
+            }
+        }
+        saveDataToFile();
+    }
 
-    // void EnableDynamicPixelsItems()
-    // {
-    //     for (auto &output : _DynamicPixelsOutputs)
-    //     {
-    //         output->EnableOutput();
-    //     }
-    // }
-
-};
     void saveDataToFile()
     {
         std::ofstream outfile;
@@ -144,19 +156,19 @@ public:
         outfile.close();
     }
 
-    void SetPSUState(int psu_num, bool psuOn)
+    void SetPSUState(std::string itemname, int psu_num, bool psuOn)
     {
-        DynamicPixelsPSUSwitch DynamicPixelsPSUSwitch(psu_num, psuOn);
+        DynamicPixelsPSUSwitch dynamicpixelsPSUSwitch(itemname, psu_num);
         if (psuOn)
         {
-            DynamicPixelsPSUSwitch.setPSUOn();
+            dynamicpixelsPSUSwitch.setPSUOn();
         }
         else
         {
-            DynamicPixelsPSUSwitch.setPSUOff();
+            dynamicpixelsPSUSwitch.setPSUOff();
         }
     }
-
+};
 
 extern "C"
 {

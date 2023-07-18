@@ -19,10 +19,12 @@
 #include <istream>
 #include <ostream>
 
-DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string int psu_num) : DynamicPixelsItem(itemname),
-                                                                          m_psu_num(psu_num)
+#include "util/GPIOUtils.h"
+
+DynamicPixelsPSUSwitch::DynamicPixelsPSUSwitch(std::string const& itemname, int psu_num) : DynamicPixelsItem(itemname),
+                                                              m_psu_num(psu_num)
 {
-    m_deviceId = getDeviceId(plug_num);
+   // m_deviceId = getDeviceId(psu_num);
 }
 
 DynamicPixelsPSUSwitch::~DynamicPixelsPSUSwitch()

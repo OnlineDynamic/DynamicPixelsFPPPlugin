@@ -18,12 +18,13 @@
 #include <istream>
 #include <ostream>
 
-#include "util/GPIOUtils.h"
+
 
 DynamicPixelsItem::DynamicPixelsItem(std::string const& itemname) :
-    m_name(itemname),
+    m_name(itemname)
 {
-    m_GPIONumber = PinCapabilities::getPinByName(itemname).ptr();
+    const PinCapabilities& pin = PinCapabilities::getPinByName(itemname);
+    m_GPIONumber = pin.gpio;
     LogInfo(VB_PLUGIN, "%d is gpio number: %d",itemname, m_GPIONumber);
 }
 
