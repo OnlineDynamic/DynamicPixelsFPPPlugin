@@ -60,20 +60,20 @@ public:
         _DynamicPixelsOutputs.clear();
     }
 
-    class DynamicPixelsPSUCommand : public Command
+    class DynamicPixelsPSUSwitchCommand : public Command
     {
     public:
-        DynamicPixelsPSUCommand(DynamicPixelsPlugin *p) : Command("Dynamic Pixels PSU Control"), plugin(p)
+        DynamicPixelsPSUSwitchCommand(DynamicPixelsPlugin *p) : Command("Dynamic Pixels PSU Control"), plugin(p)
         {
-            args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(0, 255).setDefaultValue("0"));
+            args.push_back(CommandArg("PSU", "int", "Set PSU Number").setRange(0, 4).setDefaultValue("1"));
             args.push_back(CommandArg("state", "bool", "Set PSU On or Off").setDefaultValue("true"));
         }
 
         virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
         {
             bool psuOn = true;
-            int psu_num = 0;
-            if (args.size() >= 3)
+            int psu_num = 1;
+            if (args.size() >= 1)
             {
                 psu_num = std::stoi(args[0]);
             }
@@ -90,7 +90,7 @@ public:
 
     void registerCommand()
     {
-        CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUCommand(this));
+        CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUSwitchCommand(this));
     }
 
 
