@@ -13,31 +13,6 @@ $logFile = $settings['logDirectory']."/".$pluginName.".log";
 
 $gitURL = "https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin.git";
 
-
-function returnIfExists($json, $setting) {
-    if ($json == null) {
-        return "";
-    }
-    if (array_key_exists($setting, $json)) {
-        return $json[$setting];
-    }
-    return "";
-}
-
-function convertAndGetSettings() {
-    global $settings;
-        
-    $cfgFile = $settings['configDirectory'] . "/plugin.dynamicpixels.json";
-    if (file_exists($cfgFile)) {
-        $j = file_get_contents($cfgFile);
-        $json = json_decode($j, true);
-        return $json;
-    }
-    $j = "[]";
-    return json_decode($j, true);
-}
-
-$pluginJson = convertAndGetSettings();
 ?>
 
 
@@ -47,7 +22,7 @@ $pluginJson = convertAndGetSettings();
 
 <script>
 
-var dynamicpixelsConfig = <? echo json_encode($pluginJson, JSON_PRETTY_PRINT); ?>;
+// var dynamicpixelsConfig = <? //echo json_encode($pluginJson, JSON_PRETTY_PRINT); ?>;
 
 
 var uniqueId = 1;
@@ -66,7 +41,7 @@ function AdddynamicpixelsItem(type) {
     //html += ">Light</option><option value='switch'";
     //if(type == 'switch') {html += " selected ";}
     html += ">PSUControl</option></select>";
-    html += "<td><input type='text' minlength='7' maxlength='15' size='15' pattern='^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$' class='itemname' /></td>";
+    html += "<td><?  PrintSettingTextSaved("ITEM_NAME", 0, 0, $maxlength = 32, $size = 32, $pluginName, $defaultValue = "Countdown Completed!", $callbackName = "updateOutputText", $changedFunction = "", $inputType = "text", $sData = array());?></td>";
     html += "<td><input type='number' value='1' min='1' max='3' class='psu_num' />";
     html += "<td><input type='number' value='0' min='0' max='30' class='max_current' />";
     html += "</tr>";
@@ -81,43 +56,43 @@ function AdddynamicpixelsItem(type) {
     return newRow;
 }
 
-function SavedynamicpixelsItem(row) {
-    var itemname = $(row).find('.itemname').val();
-    var psu_num = parseInt($(row).find('.psu_num').val(),10);
+// function SavedynamicpixelsItem(row) {
+//     var itemname = $(row).find('.itemname').val();
+//     var psu_num = parseInt($(row).find('.psu_num').val(),10);
 
-    var max_current = parseInt($(row).find('.max_current').val(),10);
-	var devicetype = $(row).find('.devicetype').val();
+//     var max_current = parseInt($(row).find('.max_current').val(),10);
+// 	var devicetype = $(row).find('.devicetype').val();
 
-    var json = {
-        "itemname": itemname,
-        "psu_num": psu_num,
-        "devicetype": devicetype,
-        "max_current": max_current
-    };
-    return json;
-}
+//     var json = {
+//         "itemname": itemname,
+//         "psu_num": psu_num,
+//         "devicetype": devicetype,
+//         "max_current": max_current
+//     };
+//     return json;
+// }
 
-function SavedynamicpixelsItems() {
-    var dynamicpixelsConfig = [];
-    var i = 0;
-    $("#dynamicpixelsTableBody > tr").each(function() {
-        dynamicpixelsConfig[i++] = SavedynamicpixelsItem(this);
-    });
+// function SavedynamicpixelsItems() {
+//     var dynamicpixelsConfig = [];
+//     var i = 0;
+//     $("#dynamicpixelsTableBody > tr").each(function() {
+//         dynamicpixelsConfig[i++] = SavedynamicpixelsItem(this);
+//     });
     
-    var data = JSON.stringify(dynamicpixelsConfig);
-    $.ajax({
-        type: "POST",
-        url: 'fppjson.php?command=setPluginJSON&plugin=dynamicpixels',
-        dataType: 'json',
-        async: false,
-        data: data,
-        processData: false,
-        contentType: 'application/json',
-        success: function (data) {
-           SetRestartFlag(2);
-        }
-    });
-}
+//     var data = JSON.stringify(dynamicpixelsConfig);
+//     $.ajax({
+//         type: "POST",
+//         url: 'fppjson.php?command=setPluginJSON&plugin=dynamicpixels',
+//         dataType: 'json',
+//         async: false,
+//         data: data,
+//         processData: false,
+//         contentType: 'application/json',
+//         success: function (data) {
+//            SetRestartFlag(2);
+//         }
+//     });
+// }
 
 
 function RenumberRows() {
@@ -185,12 +160,12 @@ $(document).ready(function() {
 </div>
 <script>
 
-$.each(dynamicpixelsConfig, function( key, val ) {
-    var row = AdddynamicpixelsItem(val["devicetype"]);
-    $(row).find('.itemname').val(val["itemname"]);
-    $(row).find('.psu_num').val(val["psu_num"]);
-    $(row).find('.max_current').val(val["max_current"]);
-});
+// $.each(dynamicpixelsConfig, function( key, val ) {
+//     var row = AdddynamicpixelsItem(val["devicetype"]);
+//     $(row).find('.itemname').val(val["itemname"]);
+//     $(row).find('.psu_num').val(val["psu_num"]);
+//     $(row).find('.max_current').val(val["max_current"]);
+// });
 </script>
 
 </fieldset>
