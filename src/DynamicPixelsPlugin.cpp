@@ -51,7 +51,7 @@ private:
 public:
     DynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-plugin-dynamicpixels")
     {
-        LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
+       // LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
         configLocation = FPP_DIR_CONFIG("/plugin-fpp-dynamicpixels.json");
         if (FileExists(configLocation)) {
             Json::Value root;
