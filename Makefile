@@ -1,10 +1,11 @@
 include /opt/fpp/src/makefiles/common/setup.mk
+include /opt/fpp/src/makefiles/platform/*.mk
 
 all: libfpp-plugin-dynamicpixels.so
 debug: all
 
-OBJECTS_fpp_dynamicpixels_so += src/DynamicPixelsPlugin.o src/DynamicPixelsPSUSwitch.o src/DynamicPixelsItem.o
-LIBS_fpp_dynamicpixels_so += -L/opt/fpp/src -lfpp
+OBJECTS_fpp_dynamicpixels_so += src/DynamicPixelsPlugin.o src/DynamicPixelsItem.o src/DynamicPixelsPSUSwitch.o 
+LIBS_fpp_dynamicpixels_so += -L/opt/fpp/src -lfpp -ljsoncpp -lhttpserver
 CXXFLAGS_src/dynamicpixelsPlugin.o += -I/opt/fpp/src
 
 %.o: %.cpp Makefile

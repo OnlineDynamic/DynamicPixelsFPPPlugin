@@ -42,17 +42,17 @@
 #include "DynamicPixelsPSUSwitch.h"
 #include "DynamicPixelsItem.h"
 
-class DynamicPixelsPlugin : public FPPPlugin
+class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
 {
 private:
-    std::vector<std::unique_ptr<DynamicPixelsItem>> _DynamicPixelsOutputs;
-    Json::Value config;
+      std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
+      Json::Value config;
 
 public:
     DynamicPixelsPlugin() : FPPPlugin("fpp-plugin-dynamicpixels")
     {
         LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
-        readFiles();
+        //readFiles();
         registerCommand();
     }
     virtual ~DynamicPixelsPlugin()
@@ -69,22 +69,16 @@ public:
             args.push_back(CommandArg("state", "bool", "Set PSU On or Off").setDefaultValue("true"));
         }
 
-        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
-        {
-            bool psuOn = true;
-            int psu_num = 1;
-            if (args.size() >= 1)
-            {
-                psu_num = std::stoi(args[0]);
+        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override {
+            std::string ipAddress = "";
+            if (args.size() >= 1) {
+              ipAddress = args[0];
             }
-            if (args.size() >= 2)
-            {
-                psuOn = (args[1]=="1");
-            }
-            std::string itemname = "PSU1";
-            plugin->SetPSUState(itemname, psu_num, psuOn);
-            return std::make_unique<Command::Result>("Dynamic Pixels PSU Set");
+
+            //plugin->SetLightOff(ipAddress);
+            return std::make_unique<Command::Result>("Dynamic Pixels PSU Control Set");
         }
+     
         DynamicPixelsPlugin *plugin;
     };
 
@@ -93,67 +87,6 @@ public:
         CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUSwitchCommand(this));
     }
 
-    void readFiles()
-    {
-        // read topic, payload and start channel settings from JSON setting file.
-        std::string configLocation = FPP_DIR_CONFIG("/plugin.dynamicpixels.json");
-        if (LoadJsonFromFile(configLocation, config))
-        {
-            for (unsigned int i = 0; i < config.size(); i++)
-            {
-                std::string const itemname = config[i]["itemname"].asString();
-                std::string const devicetype = config[i].get("devicetype", "PSUController").asString();
-                unsigned int sc = config[i].get("startchannel", 1).asInt();
-                if (!itemname.empty())
-                {
-                    std::unique_ptr<DynamicPixelsItem> dynamicpixelsItem;
-                    if (devicetype.find("light") != std::string::npos)
-                    {
-                        //        dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
-                    }
-                    else if (devicetype.find("PSUController") != std::string::npos)
-                    {
-                        int const psu_num = config[i].get("psu_num", 0).asInt();
-                        std::string itemname = config[i]["itemname"].asString();
-                        
-                        dynamicpixelsItem = std::make_unique<DynamicPixelsPSUSwitch>(itemname, psu_num);
-                    }
-                    else
-                    {
-                        LogInfo(VB_PLUGIN, "Devicetype not found '%s'", devicetype.c_str());
-                        // dynamicpixelsItem = std::make_unique<DynamicPixelsLight>(ip, sc);
-                    }
-                       // LogInfo(VB_PLUGIN, "Added %s\n", dynamicpixelsItem->GetConfigString().c_str());
-                    _DynamicPixelsOutputs.push_back(std::move(dynamicpixelsItem));
-                }
-            }
-        }
-        saveDataToFile();
-    }
-
-    void saveDataToFile()
-    {
-        std::ofstream outfile;
-
-        outfile.open(FPP_DIR_CONFIG("/fpp-plugin-dynamicpixels"));
-
-        if (_DynamicPixelsOutputs.size() == 0)
-        {
-            outfile << "nooutputsfound;1;null";
-            outfile << "\n";
-        }
-
-        for (auto &out : _DynamicPixelsOutputs)
-        {
-            // outfile << out->GetIPAddress();
-            // outfile << ";";
-            // outfile << out->GetStartChannel();
-            // outfile << ";";
-            // outfile << out->GetType();
-            // outfile << "\n";
-        }
-        outfile.close();
-    }
 
     void SetPSUState(std::string itemname, int psu_num, bool psuOn)
     {
