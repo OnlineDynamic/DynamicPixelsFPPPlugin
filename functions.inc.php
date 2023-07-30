@@ -4,10 +4,19 @@ include_once("/opt/fpp/www/common.php");
 $pluginName = basename(dirname(__FILE__));
 $pluginConfigFile = $settings['configDirectory'] . "/plugin." .$pluginName;
 
+$controllerPhysicalConfigFile = "./controllerPhysicalConfigs.json";
+
 if (file_exists($pluginConfigFile)){
 	$pluginSettings = parse_ini_file($pluginConfigFile);
 }else{
 	$pluginSettings = array(); //There have been no settings saved by the user, create empty array
+}
+
+
+if (file_exists($controllerPhysicalConfigFile)){
+	$controllerConfig = parse_ini_file($controllerPhysicalConfigFile);
+}else{
+	$controllerConfig = array(); //There have been no settings saved by the user, create empty array
 }
 
 if (isset($pluginSettings['YEAR'])){

@@ -42,7 +42,7 @@
 #include "DynamicPixelsPSUSwitch.h"
 #include "DynamicPixelsItem.h"
 
-class DynamicPixelsPlugin : public FPPPlugin
+class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
 {
 private:
     std::vector<std::unique_ptr<DynamicPixelsItem>> _DynamicPixelsOutputs;
