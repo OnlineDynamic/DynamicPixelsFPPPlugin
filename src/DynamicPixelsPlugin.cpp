@@ -96,6 +96,22 @@ public:
         CommandManager::INSTANCE.addCommand(new DynamicPixelsPSUSwitchCommand(this));
     }
 
+        virtual const std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override {        
+        std::string p0 = req.get_path_pieces()[0];
+        int plen = req.get_path_pieces().size();
+        if (plen > 1) {
+            std::vector<std::string> vals;
+            for (int x = 1; x < req.get_path_pieces().size(); x++) {
+                std::string p1 = req.get_path_pieces()[x];
+                vals.push_back(p1);
+            }
+            //setBrightness(vals);
+        }
+        
+        std::string v = std::to_string(brightness);
+        return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
+    }
+
 
     void SetPSUState(std::string itemname, int psu_num, bool psuOn)
     {
@@ -111,6 +127,7 @@ public:
     }
 
         std::string configLocation;
+            int brightness = -1;
 };
 
 extern "C"
