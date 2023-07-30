@@ -42,22 +42,31 @@
 #include "DynamicPixelsPSUSwitch.h"
 #include "DynamicPixelsItem.h"
 
-class DynamicPixelsPlugin : public FPPPlugin, public httpserver::http_resource
+class DynamicPixelsPlugin : public FPPPlugins::Plugin, public httpserver::http_resource
 {
 private:
       std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
       Json::Value config;
 
 public:
-    DynamicPixelsPlugin() : FPPPlugin("fpp-plugin-dynamicpixels")
+    DynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-plugin-dynamicpixels")
     {
         LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
-        //readFiles();
+        configLocation = FPP_DIR_CONFIG("/plugin-fpp-dynamicpixels.json");
+        if (FileExists(configLocation)) {
+            Json::Value root;
+            if (LoadJsonFromFile(configLocation, root)) {
+                if (root.isMember("brightness")) {
+                  //  startBrightness = root["brightness"].asInt();
+                }
+            }
+        }
+        //setBrightness(startBrightness, false);
         registerCommand();
     }
     virtual ~DynamicPixelsPlugin()
     {
-        _DynamicPixelsOutputs.clear();
+       // _DynamicPixelsOutputs.clear();
     }
 
     class DynamicPixelsPSUSwitchCommand : public Command
@@ -100,11 +109,13 @@ public:
             dynamicpixelsPSUSwitch.setPSUOff();
         }
     }
+
+        std::string configLocation;
 };
 
 extern "C"
 {
-    FPPPlugin *createPlugin()
+    FPPPlugins::Plugin *createPlugin()
     {
         return new DynamicPixelsPlugin();
     }
