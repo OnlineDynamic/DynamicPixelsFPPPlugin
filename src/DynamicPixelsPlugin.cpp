@@ -29,29 +29,23 @@
 #include "log.h"
 #include "MultiSync.h"
 
-#if __has_include("channeloutput/ChannelOutputSetup.h")
-#include "channeloutput/ChannelOutputSetup.h"
-#elif __has_include("channeloutput/channeloutput.h")
-#include "channeloutput/channeloutput.h"
-#endif
-
 #include "fppversion_defines.h"
 
 #include "commands/Commands.h"
 
 #include "DynamicPixelsPSUSwitch.h"
-#include "DynamicPixelsItem.h"
+//#include "DynamicPixelsItem.h"
 
 class DynamicPixelsPlugin : public FPPPlugins::Plugin, public httpserver::http_resource
 {
 private:
-      std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
+  //    std::vector<std::unique_ptr <DynamicPixelsItem>> _DynamicPixelsOutputs;
       Json::Value config;
 
 public:
     DynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-plugin-dynamicpixels")
     {
-       // LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
+        LogInfo(VB_PLUGIN, "Initializing Dynamic Pixels Plugin\n");
         configLocation = FPP_DIR_CONFIG("/plugin-fpp-dynamicpixels.json");
         if (FileExists(configLocation)) {
             Json::Value root;
