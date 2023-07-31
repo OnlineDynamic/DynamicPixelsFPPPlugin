@@ -20,7 +20,7 @@ param("param1" ) can be used for an api like /api/plugin/fpp-BigButtons/:param1
 */
 
 
-function getEndpointsfppDynamicPixels() {
+function getEndpointsfpppluginDynamicPixels() {
     $result = array();
 
     $ep = array(

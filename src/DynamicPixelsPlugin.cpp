@@ -33,7 +33,7 @@
 
 #include "commands/Commands.h"
 
-#include "DynamicPixelsPSUSwitch.h"
+//#include "DynamicPixelsPSUSwitch.h"
 //#include "DynamicPixelsItem.h"
 
 class DynamicPixelsPlugin : public FPPPlugins::Plugin, public httpserver::http_resource
@@ -107,9 +107,9 @@ public:
     }
 
 
-    void SetPSUState(std::string itemname, int psu_num, bool psuOn)
+    void SetPSUState(int psu_num, bool psuOn)
     {
-        DynamicPixelsPSUSwitch dynamicpixelsPSUSwitch(itemname, psu_num);
+/*         DynamicPixelsPSUSwitch dynamicpixelsPSUSwitch(itemname, psu_num);
         if (psuOn)
         {
             dynamicpixelsPSUSwitch.setPSUOn();
@@ -117,7 +117,7 @@ public:
         else
         {
             dynamicpixelsPSUSwitch.setPSUOff();
-        }
+        } */
     }
 
         std::string configLocation;
