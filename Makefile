@@ -1,18 +1,19 @@
-include /opt/fpp/src/makefiles/common/setup.mk
-include /opt/fpp/src/makefiles/platform/*.mk
+SRCDIR ?= /opt/fpp/src
+include ${SRCDIR}/makefiles/common/setup.mk
+include $(SRCDIR)/makefiles/platform/*.mk
 
-all: libfpp-plugin-dynamicpixels.so
+all: libfpp-dynamicpixels.$(SHLIB_EXT)
 debug: all
 
-OBJECTS_fpp_dynamicpixels_so += src/DynamicPixelsPlugin.o
-LIBS_fpp_dynamicpixels_so += -L/opt/fpp/src -lfpp -ljsoncpp -lhttpserver
-CXXFLAGS_src/dynamicpixelsPlugin.o += -I/opt/fpp/src
+OBJECTS_fpp_DynamicPixels_so += src/FPPDynamicPixels.o
+LIBS_fpp_DynamicPixels_so += -L${SRCDIR} -lfpp -ljsoncpp -lhttpserver
+CXXFLAGS_src/FPPDynamicPixels.o += -I${SRCDIR}
 
 %.o: %.cpp Makefile
 	$(CCACHE) $(CC) $(CFLAGS) $(CXXFLAGS) $(CXXFLAGS_$@) -c $< -o $@
 
-libfpp-plugin-dynamicpixels.so: $(OBJECTS_fpp_dynamicpixels_so) /opt/fpp/src/libfpp.so
-	$(CCACHE) $(CC) -shared $(CFLAGS_$@) $(OBJECTS_fpp_dynamicpixels_so) $(LIBS_fpp_dynamicpixels_so) $(LDFLAGS) -o $@
+libfpp-dynamicpixels.$(SHLIB_EXT): $(OBJECTS_fpp_DynamicPixels_so) ${SRCDIR}/libfpp.$(SHLIB_EXT)
+	$(CCACHE) $(CC) -shared $(CFLAGS_$@) $(OBJECTS_fpp_DynamicPixels_so) $(LIBS_fpp_DynamicPixels_so) $(LDFLAGS) -o $@
 
 clean:
-	rm -f libfpp-plugin-dynamicpixels.so $(OBJECTS_fpp_dynamicpixels_so)
+	rm -f libfpp-dynamicpixels.so $(OBJECTS_fpp_DynamicPixels_so)
