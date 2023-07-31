@@ -27,10 +27,10 @@
 class FPPDynamicPixelsPlugin : public FPPPlugins::Plugin, public FPPPlugins::ChannelDataPlugin, public FPPPlugins::APIProviderPlugin, public httpserver::http_resource
 {
 public:
-    FPPDynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-dynamicpixels"), FPPPlugins::ChannelDataPlugin(), FPPPlugins::APIProviderPlugin()
+    FPPDynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-plugin-DynamicPixels"), FPPPlugins::ChannelDataPlugin(), FPPPlugins::APIProviderPlugin()
     {
         int startBrightness = 100;
-        configLocation = FPP_DIR_CONFIG("/plugin.fpp-dynamicpixels.json");
+        configLocation = FPP_DIR_CONFIG("/fpp-plugin-DynamicPixels.json");
         if (FileExists(configLocation))
         {
             Json::Value root;
