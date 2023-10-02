@@ -6,7 +6,7 @@
       <div id='credits'>
         <b>Plugin Developed By:</b><br />
 		<br />
-        Stuart Ledingham of DynamicPixels<br />
+        Stuart Ledingham of Dynamic Pixels<br />
 		<br />
         <a href='https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin'>Git Repository</a><br>
         <a href='https://github.com/OnlineDynamic/DynamicPixelsFPPPlugin/issues'>Bug Reporter</a><br>
