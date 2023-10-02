@@ -11,7 +11,7 @@ if [ ! -f $magic ]; then
 Property=ID_MODEL_ID=8152
 
 [Link]
-MACAddress=RPIoui:$mac
+MACAddress=$RPIoui:$mac
 EOF
 
 sudo update-initramfs -k all -u
