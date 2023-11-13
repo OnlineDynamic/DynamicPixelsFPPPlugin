@@ -12,7 +12,7 @@ make "SRCDIR=${SRCDIR}"
 . ${FPPDIR}/scripts/common
 
 # install jq utility for PSU Control script to work
-sudo apt-get install jq
+sudo apt-get -y install jq
 
 # Execute script to fix mac address to be static
 
