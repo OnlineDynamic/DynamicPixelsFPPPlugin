@@ -78,7 +78,7 @@ public:
             args.push_back(CommandArg("brightness", "int", "Brightness").setRange(-100, 100).setDefaultValue("0"));
         }
 
-        virtual std::unique_ptr<Command::Result> run(HTTP_RESPONSE_CONST std::vector<std::string> &args) override
+        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
         {
             int adjust = 0;
             if (args.size() >= 1)
@@ -100,7 +100,7 @@ public:
             args.push_back(CommandArg("duration", "int", "Duration (seconds)").setRange(0, 14400).setDefaultValue("60"));
         }
 
-        virtual std::unique_ptr<Command::Result> run(HTTP_RESPONSE_CONST std::vector<std::string> &args) override
+        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
         {
             int newBrightness = 100;
             int duration = 60;
@@ -233,7 +233,7 @@ public:
     {
         m_ws->register_resource("/Brightness", this, true);
 
-        std::function<void(HTTP_RESPONSE_CONST std::string & topic, HTTP_RESPONSE_CONST std::string & payload)> f = [this](HTTP_RESPONSE_CONST std::string &topic, HTTP_RESPONSE_CONST std::string &payload)
+        std::function<void(const std::string &topic, const std::string &payload)> f = [this](const std::string &topic, const std::string &payload)
         {
             multiSyncData((uint8_t *)payload.c_str(), payload.size() + 1);
         };
@@ -272,7 +272,7 @@ public:
         }
     }
 
-    std::vector<std::pair<uint32_t, uint32_t>> subtractRanges(HTTP_RESPONSE_CONST std::vector<std::pair<uint32_t, uint32_t>> &src, HTTP_RESPONSE_CONST std::vector<std::pair<uint32_t, uint32_t>> &sub)
+    std::vector<std::pair<uint32_t, uint32_t>> subtractRanges(const std::vector<std::pair<uint32_t, uint32_t>> &src, const std::vector<std::pair<uint32_t, uint32_t>> &sub)
     {
         std::vector<std::pair<uint32_t, uint32_t>> result;
         for (const auto &range1 : src)
