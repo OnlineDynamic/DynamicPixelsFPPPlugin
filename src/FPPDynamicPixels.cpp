@@ -57,7 +57,7 @@ public:
             args.push_back(CommandArg("brightness", "int", "Brightness").setRange(0, 200).setDefaultValue("100"));
         }
 
-        virtual std::unique_ptr<Command::Result> run(HTTP_RESPONSE_CONST std::vector<std::string> &args) override
+        virtual std::unique_ptr<Command::Result> run(const std::vector<std::string> &args) override
         {
             int brightness = 100;
             if (args.size() >= 1)
