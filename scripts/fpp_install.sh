@@ -19,5 +19,6 @@ sudo apt-get -y install jq
 
 # Execute script to fix mac address to be static
 
-setSetting restartFlag 1
+# Need to force reboot for CSP change to take affect
+setSetting rebootFlag 1
 
