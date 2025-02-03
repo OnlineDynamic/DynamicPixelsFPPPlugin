@@ -11,6 +11,9 @@ make "SRCDIR=${SRCDIR}"
 
 . ${FPPDIR}/scripts/common
 
+# Add required Apache CSP (Content-Security-Policy allowed domains
+${FPPDIR}/scripts/ManageApacheContentPolicy.sh add connect-src https://dynamicpixels.co.uk
+
 # install jq utility for PSU Control script to work
 sudo apt-get -y install jq
 
