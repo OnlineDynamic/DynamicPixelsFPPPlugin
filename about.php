@@ -229,12 +229,20 @@
                     <p>Comprehensive GPIO pin control with configurable inputs and outputs for custom hardware integration.</p>
                 </div>
                 <div class="feature-card">
+                    <h3>🌐 Network Discovery</h3>
+                    <p>Automatically discover and manage all DynamicPixels controllers on your network with real-time status monitoring.</p>
+                </div>
+                <div class="feature-card">
                     <h3>📊 System Monitoring</h3>
                     <p>Real-time monitoring of controller status, power consumption, and system health metrics.</p>
                 </div>
                 <div class="feature-card">
                     <h3>🔧 Configuration Tools</h3>
                     <p>Easy-to-use configuration interface for customizing controller behavior and settings.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 REST API</h3>
+                    <p>Comprehensive REST API for automation and integration with external systems and custom applications.</p>
                 </div>
             </div>
 
@@ -299,6 +307,17 @@
                 <div class="api-description">
                     <strong>Description:</strong> Get information about the detected DynamicPixels controller<br>
                     <strong>Returns:</strong> Detected controller model, variant, and available PSUs
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <div>
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/plugin/fpp-DynamicPixels/network/discover</span>
+                </div>
+                <div class="api-description">
+                    <strong>Description:</strong> Discover all DynamicPixels controllers on the network<br>
+                    <strong>Returns:</strong> Array of discovered systems with controller details, serial numbers, and PSU counts
                 </div>
             </div>
 

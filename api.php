@@ -72,6 +72,12 @@ function getEndpointsfpppluginDynamicPixels() {
         'callback' => 'fppDynamicPixelsGetControllerInfo');
     array_push($result, $ep);
 
+    $ep = array(
+        'method' => 'GET',
+        'endpoint' => 'network/discover',
+        'callback' => 'fppDynamicPixelsNetworkDiscover');
+    array_push($result, $ep);
+
     return $result;
 }
 
@@ -275,11 +281,35 @@ function fppDynamicPixelsGetPSUStatus() {
     );
     
     foreach ($detected['config']['controlpins'] as $psuConfig) {
+        // Try to get actual GPIO status
+        $gpioStatus = 'unknown';
+        $statusUrl = "http://localhost/api/command/GPIO/{$psuConfig['gpiopin']}/status";
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $statusUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 && $response) {
+            $responseData = json_decode($response, true);
+            if ($responseData && isset($responseData['Status']) && $responseData['Status'] === 'OK') {
+                if (isset($responseData['Value'])) {
+                    // Convert GPIO value to on/off status
+                    $gpioStatus = ($responseData['Value'] == 1) ? 'on' : 'off';
+                }
+            }
+        }
+        
         $psuInfo = array(
             'psu' => $psuConfig['psu'],
             'gpionum' => $psuConfig['gpionum'],
             'gpiopin' => $psuConfig['gpiopin'],
-            'status' => 'unknown' // Note: FPP GPIO status would need separate API call
+            'status' => $gpioStatus
         );
         array_push($result['psus'], $psuInfo);
     }
@@ -385,6 +415,175 @@ function fppDynamicPixelsControlAllPSUs() {
     );
     
     return json($response);
+}
+
+// GET /api/plugin/fpp-DynamicPixels/network/discover
+function fppDynamicPixelsNetworkDiscover() {
+    $result = array();
+    $result['discoveredSystems'] = array();
+    $result['dynamicPixelsSystems'] = array();
+    $result['summary'] = array();
+    
+    // Get all systems from FPP MultiSync API
+    $multiSyncUrl = "http://localhost/api/fppd/multiSyncSystems";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $multiSyncUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200 || !$response) {
+        $result['error'] = 'Failed to fetch MultiSync systems';
+        return json($result);
+    }
+    
+    $multiSyncData = json_decode($response, true);
+    if (!$multiSyncData || !isset($multiSyncData['systems'])) {
+        $result['error'] = 'Invalid MultiSync response';
+        return json($result);
+    }
+    
+    $result['discoveredSystems'] = $multiSyncData['systems'];
+    
+    // Deduplicate systems by UUID and consolidate IP addresses
+    $systemsByUuid = array();
+    
+    foreach ($multiSyncData['systems'] as $system) {
+        $uuid = isset($system['uuid']) ? $system['uuid'] : $system['address']; // fallback to address if no UUID
+        $address = $system['address'];
+        $hostname = isset($system['hostname']) ? $system['hostname'] : 'Unknown';
+        
+        if (!isset($systemsByUuid[$uuid])) {
+            // First time seeing this UUID
+            $systemsByUuid[$uuid] = $system;
+            $systemsByUuid[$uuid]['addresses'] = array($address);
+        } else {
+            // We've seen this UUID before, add this IP to the addresses array
+            if (!in_array($address, $systemsByUuid[$uuid]['addresses'])) {
+                array_push($systemsByUuid[$uuid]['addresses'], $address);
+            }
+        }
+    }
+    
+    // Check each unique system for DynamicPixels cape info
+    foreach ($systemsByUuid as $uuid => $system) {
+        $addresses = $system['addresses'];
+        $hostname = isset($system['hostname']) ? $system['hostname'] : 'Unknown';
+        
+        // Check if this might be a DynamicPixels controller by hostname
+        $isDynamicPixelsCandidate = false;
+        if (stripos($hostname, 'dynamicpixel') !== false || 
+            stripos($hostname, 'd12') !== false || 
+            stripos($hostname, 'd24') !== false) {
+            $isDynamicPixelsCandidate = true;
+        }
+        
+        // Try to get cape info from the primary address (first in list)
+        $primaryAddress = $addresses[0];
+        $statsUrl = "http://{$primaryAddress}/api/statistics/usage";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $statsUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+        
+        $statsResponse = curl_exec($ch);
+        $statsHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        $systemInfo = array(
+            'uuid' => $uuid,
+            'addresses' => $addresses,
+            'primaryAddress' => $primaryAddress,
+            'hostname' => $hostname,
+            'model' => isset($system['model']) ? $system['model'] : 'Unknown',
+            'version' => isset($system['version']) ? $system['version'] : 'Unknown',
+            'fppMode' => isset($system['fppMode']) ? $system['fppMode'] : 0,
+            'fppModeString' => isset($system['fppModeString']) ? $system['fppModeString'] : 'unknown',
+            'lastSeen' => isset($system['lastSeenStr']) ? $system['lastSeenStr'] : 'Unknown',
+            'channelRanges' => isset($system['channelRanges']) ? $system['channelRanges'] : '',
+            'isDynamicPixelsCandidate' => $isDynamicPixelsCandidate,
+            'capeInfo' => null,
+            'isDynamicPixels' => false,
+            'controllerType' => null,
+            'controllerVersion' => null,
+            'controllerId' => null,
+            'serialNumber' => null,
+            'designer' => null,
+            'vendor' => null,
+            'psuCount' => 0
+        );
+        
+        if ($statsHttpCode === 200 && $statsResponse) {
+            $statsData = json_decode($statsResponse, true);
+            if ($statsData && isset($statsData['capeInfo']) && isset($statsData['capeInfo']['name'])) {
+                $capeInfo = $statsData['capeInfo'];
+                $systemInfo['capeInfo'] = $capeInfo;
+                
+                // Check if this is a DynamicPixels cape
+                if (stripos($capeInfo['name'], 'dynamicpixels') !== false || 
+                    (isset($capeInfo['vendor']['name']) && stripos($capeInfo['vendor']['name'], 'dynamic pixels') !== false)) {
+                    
+                    $systemInfo['isDynamicPixels'] = true;
+                    $systemInfo['controllerType'] = $capeInfo['name'];
+                    $systemInfo['controllerId'] = isset($capeInfo['id']) ? $capeInfo['id'] : null;
+                    $systemInfo['serialNumber'] = isset($capeInfo['serialNumber']) ? $capeInfo['serialNumber'] : null;
+                    $systemInfo['designer'] = isset($capeInfo['designer']) ? $capeInfo['designer'] : null;
+                    $systemInfo['vendor'] = isset($capeInfo['vendor']) ? $capeInfo['vendor'] : null;
+                    
+                    // Extract version from the ID if available
+                    if (isset($capeInfo['id'])) {
+                        // Parse version from ID like "DynamicPixels-D12-12-v0.1"
+                        if (preg_match('/v([0-9.]+)$/', $capeInfo['id'], $versionMatches)) {
+                            $systemInfo['controllerVersion'] = $versionMatches[1];
+                        }
+                    }
+                    
+                    // Determine PSU count based on controller type
+                    if (stripos($capeInfo['name'], 'd12') !== false) {
+                        $systemInfo['psuCount'] = 2;
+                    } elseif (stripos($capeInfo['name'], 'd24') !== false) {
+                        $systemInfo['psuCount'] = 3;
+                    }
+                    
+                    // Get PSU status from this controller
+                    $psuStatusUrl = "http://{$primaryAddress}/api/plugin/fpp-plugin-DynamicPixels/psu/status";
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $psuStatusUrl);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+                    
+                    $psuResponse = curl_exec($ch);
+                    $psuHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    
+                    $systemInfo['psuStatus'] = array();
+                    if ($psuHttpCode === 200 && $psuResponse) {
+                        $psuData = json_decode($psuResponse, true);
+                        if ($psuData && isset($psuData['psus'])) {
+                            $systemInfo['psuStatus'] = $psuData['psus'];
+                        }
+                    }
+                    
+                    array_push($result['dynamicPixelsSystems'], $systemInfo);
+                }
+            }
+        }
+    }
+    
+    // Generate summary
+    $result['summary'] = array(
+        'totalSystems' => count($systemsByUuid),
+        'dynamicPixelsCount' => count($result['dynamicPixelsSystems']),
+        'timestamp' => date('Y-m-d H:i:s')
+    );
+    
+    return json($result);
 }
 
 ?>

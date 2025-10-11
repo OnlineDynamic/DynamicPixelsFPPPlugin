@@ -36,6 +36,13 @@ $menuEntries = Array(
                 'controllerModel' => 'DynamicPixels-D24'
 	),
 	Array(
+		'text' => 'DynamicPixels Network Discovery',
+		'type' => 'status',
+		'page' => 'network.php',
+		'wrap' => 1,
+                'controllerModel' => 'all'
+	),
+	Array(
 		'text' => 'DynamicPixels Plugin - About',
 		'type' => 'help',
 		'page' => 'about.php',
