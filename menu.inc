@@ -43,6 +43,13 @@ $menuEntries = Array(
                 'controllerModel' => 'all'
 	),
 	Array(
+		'text' => 'DynamicPixels System Monitor',
+		'type' => 'status',
+		'page' => 'monitor.php',
+		'wrap' => 1,
+                'controllerModel' => 'all'
+	),
+	Array(
 		'text' => 'DynamicPixels Plugin - About',
 		'type' => 'help',
 		'page' => 'about.php',

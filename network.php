@@ -214,6 +214,11 @@ include_once "/opt/fpp/www/common/menuHead.inc";
             box-shadow: 0 0 3px rgba(108, 117, 125, 0.5);
         }
         
+        .psu-status-controlled {
+            background: #17a2b8;
+            box-shadow: 0 0 3px rgba(23, 162, 184, 0.5);
+        }
+        
         .psu-status-text {
             font-size: 0.7rem;
             font-weight: 500;
@@ -309,6 +314,16 @@ include_once "/opt/fpp/www/common/menuHead.inc";
         <button class="refresh-btn" onclick="refreshNetworkData()">
             <i class="fas fa-sync-alt"></i> Refresh Network
         </button>
+
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+            <h4 style="margin: 0 0 10px 0; color: #1976d2;">PSU Status Legend</h4>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
+                <div><span class="psu-status-dot psu-status-on" style="display: inline-block; margin-right: 5px;"></span><strong>ON</strong> - PSU powered on</div>
+                <div><span class="psu-status-dot psu-status-off" style="display: inline-block; margin-right: 5px;"></span><strong>OFF</strong> - PSU powered off</div>
+                <div><span class="psu-status-dot psu-status-controlled" style="display: inline-block; margin-right: 5px;"></span><strong>CTRL</strong> - Under FPP control (status monitoring limited)</div>
+                <div><span class="psu-status-dot psu-status-unknown" style="display: inline-block; margin-right: 5px;"></span><strong>UNK</strong> - Status unknown</div>
+            </div>
+        </div>
 
         <div id="loading" class="loading" style="display: none;">
             <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -420,8 +435,10 @@ function renderControllers(systems) {
                         ${system.psuStatus && system.psuStatus.length > 0 ? 
                             system.psuStatus.map(psu => {
                                 const statusClass = psu.status === 'on' ? 'psu-status-on' : 
-                                                  psu.status === 'off' ? 'psu-status-off' : 'psu-status-unknown';
-                                const statusText = psu.status === 'unknown' ? 'UNK' : psu.status.toUpperCase();
+                                                  psu.status === 'off' ? 'psu-status-off' : 
+                                                  psu.method === 'fpp_controlled' ? 'psu-status-controlled' : 'psu-status-unknown';
+                                const statusText = psu.status === 'unknown' && psu.method === 'fpp_controlled' ? 'CTRL' : 
+                                                 psu.status === 'unknown' ? 'UNK' : psu.status.toUpperCase();
                                 return `
                                     <div class="psu-status-item">
                                         <div class="psu-status-label">PSU ${psu.psu}</div>
@@ -449,6 +466,7 @@ function renderControllers(systems) {
                         ).join('')}
                         <button class="psu-btn" onclick="controlAllPSUs('${system.primaryAddress}', 'on')" style="background: #27ae60; color: white; border-color: #27ae60;">All ON</button>
                         <button class="psu-btn" onclick="controlAllPSUs('${system.primaryAddress}', 'off')" style="background: #e74c3c; color: white; border-color: #e74c3c;">All OFF</button>
+                        <button class="psu-btn" onclick="openSystemMonitor('${system.primaryAddress}', '${system.hostname}')" style="background: #667eea; color: white; border-color: #667eea; margin-top: 10px; width: 100%;">📊 System Monitor</button>
                     </div>
                 </div>
             </div>
@@ -530,6 +548,12 @@ function controlAllPSUs(address, action) {
         .catch(error => {
             console.error(`Error controlling all PSUs on ${address}:`, error);
         });
+}
+
+function openSystemMonitor(address, hostname) {
+    // Open system monitor in a new tab
+    const monitorUrl = `/plugin.php?plugin=fpp-plugin-DynamicPixels&page=monitor.php&ip=${encodeURIComponent(address)}&name=${encodeURIComponent(hostname)}`;
+    window.open(monitorUrl, '_blank');
 }
 
 // Auto-refresh every 30 seconds

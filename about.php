@@ -1,3 +1,6 @@
+<?php
+include_once(__DIR__ . '/logo_base64.php');
+?>
 <style>
 .dynamicpixels-container {
     max-width: 1200px;
@@ -19,6 +22,9 @@
 .dynamicpixels-logo {
     max-height: 80px;
     margin-bottom: 15px;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .dynamicpixels-header h1 {
@@ -199,7 +205,7 @@
 
 <div class="dynamicpixels-container">
     <div class="dynamicpixels-header">
-        <img src="logo.png" alt="DynamicPixels Logo" class="dynamicpixels-logo" style="display: none;" id="dynamicpixels-logo">
+        <img src="<?php echo $logoBase64; ?>" alt="DynamicPixels Logo" class="dynamicpixels-logo" id="dynamicpixels-logo">
         <h1>DynamicPixels Controller Plugin</h1>
         <p>Advanced FPP functionality for DynamicPixels range of controller capes</p>
     </div>
@@ -228,10 +234,13 @@
                     <h3>⚡ GPIO Management</h3>
                     <p>Comprehensive GPIO pin control with configurable inputs and outputs for custom hardware integration.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>🌐 Network Discovery</h3>
-                    <p>Automatically discover and manage all DynamicPixels controllers on your network with real-time status monitoring.</p>
-                </div>
+                <a href="/plugin.php?plugin=fpp-plugin-DynamicPixels&page=network.php" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.1)'">
+                        <h3>🌐 Network Discovery</h3>
+                        <p>Automatically discover and manage all DynamicPixels controllers on your network with real-time status monitoring.</p>
+                        <p style="margin-top: 10px; font-size: 0.9em; color: #667eea; font-weight: bold;">→ Click to open Network Discovery</p>
+                    </div>
+                </a>
                 <div class="feature-card">
                     <h3>📊 System Monitoring</h3>
                     <p>Real-time monitoring of controller status, power consumption, and system health metrics.</p>
@@ -248,9 +257,9 @@
 
             <div class="version-info">
                 <h3>Compatibility</h3>
-                <p><strong>FPP Version:</strong> 7.0+ (Recommended: 8.0+)</p>
+                <p><strong>FPP Version:</strong> 8.5+ (Recommended: 9.2+)</p>
                 <p><strong>Hardware:</strong> DynamicPixels Controller Capes</p>
-                <p><strong>Platform:</strong> Raspberry Pi 3B+, 4B, 5</p>
+                <p><strong>Platform:</strong> Raspberry Pi Zero 2 W, 3B+, 4B, 5</p>
             </div>
         </div>
 
@@ -429,7 +438,23 @@ curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/on</pre>
 
             <div class="credits-section">
                 <h3>About Dynamic Pixels</h3>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <img src="<?php echo $logoBase64; ?>" alt="Dynamic Pixels Logo" style="max-height: 60px; max-width: 120px;">
+                    <div>
+                        <h4 style="margin: 0; color: #667eea;">Dynamic Pixels</h4>
+                        <p style="margin: 5px 0; font-style: italic;">Professional LED Lighting Solutions</p>
+                    </div>
+                </div>
                 <p>Dynamic Pixels specializes in creating innovative LED lighting controllers and solutions for professional and hobbyist lighting displays. Our controllers are designed for reliability, performance, and ease of use in demanding lighting applications.</p>
+                
+                <div style="margin-top: 15px;">
+                    <h4>Our Products:</h4>
+                    <ul>
+                        <li><strong>DynamicPixels-D12:</strong> 12-channel controller with 2 PSU outputs</li>
+                        <li><strong>DynamicPixels-D24:</strong> 24-channel controller with 3 PSU outputs</li>
+                        <li><strong>Advanced Features:</strong> I2C GPIO expansion, integrated PSU control, FPP compatibility</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="social-links">
@@ -471,14 +496,6 @@ curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/on</pre>
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanes = document.querySelectorAll('.tab-pane');
-    
-    // Check if logo exists and show it
-    const logo = document.getElementById('dynamicpixels-logo');
-    const img = new Image();
-    img.onload = function() {
-        logo.style.display = 'block';
-    };
-    img.src = 'logo.png';
     
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {

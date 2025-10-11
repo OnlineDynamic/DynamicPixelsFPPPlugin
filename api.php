@@ -267,6 +267,113 @@ function fppDynamicPixelsGetControllerInfo() {
     return json($result);
 }
 
+// Helper function to read GPIO pin status using various methods
+function readGPIOPinStatus($psuPin) {
+    // Try multiple methods to read GPIO state
+    $methods = [];
+    
+    // Method 1: Try reading via FPP command status
+    // Since FPP controls the GPIO and tracks command states, check if we can
+    // determine status from recent command history or FPP's internal state
+    
+    // Method 2: Try reading via sysfs (if available)
+    $gpiochip = "gpiochip15"; // PCA9554 I2C GPIO expander
+    $pinNum = substr($psuPin, -1); // Extract pin number (0, 1, 2)
+    
+    // First try to read the value file directly
+    $valueFile = "/sys/class/gpio/gpio" . (633 + intval($pinNum)) . "/value";
+    if (file_exists($valueFile)) {
+        $value = trim(file_get_contents($valueFile));
+        if ($value === "0" || $value === "1") {
+            $methods[] = "sysfs_direct";
+            return [
+                'status' => $value === "1" ? 'on' : 'off',
+                'method' => 'sysfs_direct',
+                'pin' => $psuPin,
+                'raw_value' => $value
+            ];
+        }
+    }
+    
+    // Method 3: Try using i2c direct read (if not busy)
+    // PCA9554 input register is at 0x00
+    $cmd = "i2cget -y 1 0x39 0x00 2>/dev/null";
+    $output = shell_exec($cmd);
+    if ($output !== null && trim($output) !== '') {
+        $hexValue = trim($output);
+        if (preg_match('/0x([0-9a-fA-F]{2})/', $hexValue, $matches)) {
+            $byteValue = hexdec($matches[1]);
+            $bitValue = ($byteValue >> intval($pinNum)) & 1;
+            $methods[] = "i2c_direct";
+            return [
+                'status' => $bitValue ? 'on' : 'off',
+                'method' => 'i2c_direct',
+                'pin' => $psuPin,
+                'raw_value' => $bitValue,
+                'register_value' => $hexValue
+            ];
+        }
+    }
+    
+    // Method 4: Try gpioget (if GPIO not busy)
+    $cmd = "gpioget --chip=$gpiochip $pinNum 2>/dev/null";
+    $output = shell_exec($cmd);
+    if ($output !== null && trim($output) !== '') {
+        $value = trim($output);
+        if ($value === "0" || $value === "1") {
+            $methods[] = "gpioget";
+            return [
+                'status' => $value === "1" ? 'on' : 'off',
+                'method' => 'gpioget',
+                'pin' => $psuPin,
+                'raw_value' => $value
+            ];
+        }
+    }
+    
+    // Method 5: Try using pinctrl
+    $cmd = "pinctrl get $psuPin 2>/dev/null | grep -o 'level=[01]' | cut -d= -f2";
+    $output = shell_exec($cmd);
+    if ($output !== null && trim($output) !== '') {
+        $value = trim($output);
+        if ($value === "0" || $value === "1") {
+            $methods[] = "pinctrl";
+            return [
+                'status' => $value === "1" ? 'on' : 'off',
+                'method' => 'pinctrl',
+                'pin' => $psuPin,
+                'raw_value' => $value
+            ];
+        }
+    }
+    
+    // Method 6: Check if we can read from FPP GPIO API directly
+    // Try to get pin information from FPP's GPIO manager
+    $fppGpioUrl = "http://localhost/api/gpio";
+    $fppResponse = @file_get_contents($fppGpioUrl);
+    if ($fppResponse) {
+        $methods[] = "fpp_gpio_api";
+        // For now, we know FPP controls it but can't read current state
+        return [
+            'status' => 'unknown',
+            'method' => 'fpp_gpio_api',
+            'pin' => $psuPin,
+            'note' => 'Pin controlled by FPP - state available but requires FPP API extension'
+        ];
+    }
+    
+    // Fallback: FPP controlled
+    $methods[] = "fpp_controlled";
+    return [
+        'status' => 'unknown',
+        'method' => 'fpp_controlled',
+        'pin' => $psuPin,
+        'note' => 'GPIO controlled by FPP daemon - direct reading blocked',
+        'tried_methods' => $methods,
+        'suggestion' => 'Use FPP GPIO commands for reliable control and status tracking'
+    ];
+}
+
 // GET /api/plugin/fpp-DynamicPixels/psu/status
 function fppDynamicPixelsGetPSUStatus() {
     $detected = detectInstalledController();
@@ -281,36 +388,29 @@ function fppDynamicPixelsGetPSUStatus() {
     );
     
     foreach ($detected['config']['controlpins'] as $psuConfig) {
-        // Try to get actual GPIO status
-        $gpioStatus = 'unknown';
-        $statusUrl = "http://localhost/api/command/GPIO/{$psuConfig['gpiopin']}/status";
-        
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $statusUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode === 200 && $response) {
-            $responseData = json_decode($response, true);
-            if ($responseData && isset($responseData['Status']) && $responseData['Status'] === 'OK') {
-                if (isset($responseData['Value'])) {
-                    // Convert GPIO value to on/off status
-                    $gpioStatus = ($responseData['Value'] == 1) ? 'on' : 'off';
-                }
-            }
-        }
+        // Try to read the actual GPIO pin status using our enhanced helper
+        $gpioPin = $psuConfig['gpiopin'];
+        $statusInfo = readGPIOPinStatus($gpioPin);
         
         $psuInfo = array(
             'psu' => $psuConfig['psu'],
             'gpionum' => $psuConfig['gpionum'],
             'gpiopin' => $psuConfig['gpiopin'],
-            'status' => $gpioStatus
+            'status' => $statusInfo['status'],
+            'method' => $statusInfo['method'],
+            'note' => isset($statusInfo['note']) ? $statusInfo['note'] : '',
+            'raw_value' => isset($statusInfo['raw_value']) ? $statusInfo['raw_value'] : null,
+            'tried_methods' => isset($statusInfo['tried_methods']) ? $statusInfo['tried_methods'] : null
         );
+        
+        // Add additional debug info if available
+        if (isset($statusInfo['register_value'])) {
+            $psuInfo['register_value'] = $statusInfo['register_value'];
+        }
+        if (isset($statusInfo['suggestion'])) {
+            $psuInfo['suggestion'] = $statusInfo['suggestion'];
+        }
+        
         array_push($result['psus'], $psuInfo);
     }
     
