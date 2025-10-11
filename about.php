@@ -391,7 +391,9 @@ curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/on</pre>
             </div>
 
             <h3>Auto-Detection</h3>
-            <p><strong>Important:</strong> This API automatically detects which DynamicPixels controller is installed (D12, D24, etc.) and maps PSU numbers to the correct GPIO pins. You don't need to specify the controller model - just use PSU numbers (1, 2, 3, etc.).</p>
+            <p><strong>Important:</strong> This API automatically detects which DynamicPixels controller is installed (D12, D24, etc.) by reading the cape-info.json file from FPP's hardware detection system. The plugin maps PSU numbers to the correct GPIO pins based on your specific controller model and version. You don't need to specify the controller model - just use PSU numbers (1, 2, 3, etc.).</p>
+            
+            <p><strong>Detection Method:</strong> The plugin first attempts to read cape information from <code>/home/fpp/media/tmp/cape-info.json</code> for accurate hardware identification. If this file is not available, it falls back to GPIO pin testing to determine the controller type.</p>
         </div>
 
         <!-- About Tab -->

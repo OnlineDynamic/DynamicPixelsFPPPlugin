@@ -101,48 +101,113 @@ function detectInstalledController() {
         return null;
     }
     
-    // Method 1: Check for specific GPIO pins to identify controller
-    // For now, we'll return the first controller as default
-    // In a real implementation, you might:
-    // - Check hardware detection files
-    // - Test GPIO pin availability
-    // - Read EEPROM data
-    // - Check device tree overlays
+    // Try to read cape-info.json for accurate hardware detection
+    $capeInfoFile = '/home/fpp/media/tmp/cape-info.json';
+    if (file_exists($capeInfoFile)) {
+        $capeInfoData = file_get_contents($capeInfoFile);
+        $capeInfo = json_decode($capeInfoData, true);
+        
+        if ($capeInfo && isset($capeInfo['name']) && isset($capeInfo['version'])) {
+            $capeName = $capeInfo['name'];
+            $capeVersion = $capeInfo['version'];
+            
+            // Look for matching controller in our configuration
+            foreach ($config['Controllers'] as $controller) {
+                if ($controller['Controller'] === $capeName) {
+                    foreach ($controller['Variants'] as $variant) {
+                        if ($variant['variant'] === $capeVersion) {
+                            return array(
+                                'controller' => $controller['Controller'],
+                                'variant' => $variant['variant'],
+                                'config' => $variant,
+                                'detection_method' => 'cape-info.json'
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-    // Simple detection logic - check which GPIO pins are available
+    // Fallback to GPIO pin detection if cape-info.json not available or no match
     foreach ($config['Controllers'] as $controller) {
         foreach ($controller['Variants'] as $variant) {
-            // Test if the GPIO pins for this controller variant exist
-            $testPin = $variant['controlpins'][0]['gpiopin'] ?? null;
-            if ($testPin && checkGPIOPinExists($testPin)) {
+            $allPinsExist = true;
+            
+            // Check if ALL GPIO pins for this controller variant exist
+            foreach ($variant['controlpins'] as $psuConfig) {
+                $gpiopin = $psuConfig['gpiopin'];
+                if (!checkGPIOPinExists($gpiopin)) {
+                    $allPinsExist = false;
+                    break;
+                }
+            }
+            
+            // If all pins exist for this controller, it's likely the correct one
+            if ($allPinsExist) {
                 return array(
                     'controller' => $controller['Controller'],
                     'variant' => $variant['variant'],
-                    'config' => $variant
+                    'config' => $variant,
+                    'detection_method' => 'gpio_fallback'
                 );
             }
         }
     }
     
-    // Fallback: return first controller if detection fails
+    // Final fallback: return first controller if all detection fails
     $firstController = $config['Controllers'][0];
     $firstVariant = $firstController['Variants'][0];
     return array(
         'controller' => $firstController['Controller'],
         'variant' => $firstVariant['variant'],
-        'config' => $firstVariant
+        'config' => $firstVariant,
+        'detection_method' => 'default_fallback'
     );
 }
 
-// Helper function to check if GPIO pin exists (basic check)
+// Helper function to check if GPIO pin exists
 function checkGPIOPinExists($gpiopin) {
-    // This is a simple check - in reality you might check:
-    // - /sys/class/gpio/ entries
-    // - Device tree information
-    // - FPP GPIO configuration
+    // Method 1: Try to call FPP's GPIO status API to see if pin exists
+    $url = "http://localhost/api/gpio";
     
-    // For now, return true to use the first available controller
-    return true;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        $gpioData = json_decode($response, true);
+        if ($gpioData && is_array($gpioData)) {
+            // Check if our GPIO pin is in the available pins
+            foreach ($gpioData as $gpio) {
+                if (isset($gpio['pin']) && $gpio['pin'] === $gpiopin) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Method 2: Try to test the GPIO pin by attempting to read its status
+    $testUrl = "http://localhost/api/command/GPIO/{$gpiopin}/status";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $testUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    // If we get a valid response (not 404), the pin likely exists
+    return ($httpCode === 200);
 }
 
 // Helper function to execute FPP GPIO command via REST API
@@ -179,6 +244,7 @@ function fppDynamicPixelsGetControllerInfo() {
     $result = array(
         'detectedController' => $detected['controller'],
         'detectedVariant' => $detected['variant'],
+        'detectionMethod' => $detected['detection_method'],
         'psuCount' => count($detected['config']['controlpins']),
         'psus' => array()
     );

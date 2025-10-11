@@ -1,7 +1,7 @@
 {
 	"Controllers": [
 		{
-			"Controller": "D12",
+			"Controller": "DynamicPixels-D12",
 			"Variants": [
 				{
 					"variant": "0.1",
@@ -21,7 +21,7 @@
 			]
 		},
 		{
-			"Controller": "D24",
+			"Controller": "DynamicPixels-D24",
 			"Variants": [
 				{
 					"variant": "0.4",
