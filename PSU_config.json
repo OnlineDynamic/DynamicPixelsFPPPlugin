@@ -1,0 +1,49 @@
+{
+	"Controllers": [
+		{
+			"Controller": "D12",
+			"Variants": [
+				{
+					"variant": "0.1",
+					"controlpins": [
+						{
+							"psu": "1",
+							"gpionum": "63",
+							"gpiopin": "1-0039-2"
+						},
+						{
+							"psu": "2",
+							"gpionum": "64",
+							"gpiopin": "1-0039-1"
+						}
+					]
+				}
+			]
+		},
+		{
+			"Controller": "D24",
+			"Variants": [
+				{
+					"variant": "0.4",
+					"controlpins": [
+						{
+							"psu": "1",
+							"gpionum": "64",
+							"gpiopin": "1-0039-2"
+						},
+						{
+							"psu": "2",
+							"gpionum": "63",
+							"gpiopin": "1-0039-1"
+						},
+						{
+							"psu": "3",
+							"gpionum": "62",
+							"gpiopin": "1-0039-0"
+						}
+					]
+				}
+			]
+		}
+	]
+}
