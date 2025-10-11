@@ -1,4 +1,8 @@
-<?
+<?php
+include_once("/opt/fpp/www/common.php");
+$pluginName = "fpp-plugin-DynamicPixels";
+$pluginConfigFile = $settings['configDirectory'] . "/plugin." . $pluginName;
+
 /*
 A way for plugins to provide their own PHP API endpoints.
 
@@ -36,16 +40,30 @@ function getEndpointsfpppluginDynamicPixels() {
         'callback' => 'fppDynamicPixelsGetPSUStatus');
     array_push($result, $ep);
 
+    // Support both GET and POST for "all" PSU control (must be before individual PSU routes)
     $ep = array(
-        'method' => 'POST',
-        'endpoint' => 'psu/:psu/:action',
-        'callback' => 'fppDynamicPixelsControlPSU');
+        'method' => 'GET',
+        'endpoint' => 'psu/all/:action',
+        'callback' => 'fppDynamicPixelsControlAllPSUs');
     array_push($result, $ep);
 
     $ep = array(
         'method' => 'POST',
         'endpoint' => 'psu/all/:action',
         'callback' => 'fppDynamicPixelsControlAllPSUs');
+    array_push($result, $ep);
+
+    // Support both GET and POST for individual PSU control
+    $ep = array(
+        'method' => 'GET',
+        'endpoint' => 'psu/:psu/:action',
+        'callback' => 'fppDynamicPixelsControlPSU');
+    array_push($result, $ep);
+
+    $ep = array(
+        'method' => 'POST',
+        'endpoint' => 'psu/:psu/:action',
+        'callback' => 'fppDynamicPixelsControlPSU');
     array_push($result, $ep);
 
     $ep = array(
