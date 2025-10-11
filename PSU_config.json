@@ -21,7 +21,7 @@
 			]
 		},
 		{
-			"Controller": "DynamicPixels-D24",
+			"Controller": "DynamicPixels-D24/0",
 			"Variants": [
 				{
 					"variant": "0.4",
