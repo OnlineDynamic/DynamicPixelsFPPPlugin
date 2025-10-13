@@ -272,9 +272,32 @@ function readGPIOPinStatus($psuPin) {
     // Try multiple methods to read GPIO state
     $methods = [];
     
-    // Method 1: Try reading via FPP command status
-    // Since FPP controls the GPIO and tracks command states, check if we can
-    // determine status from recent command history or FPP's internal state
+    // Method 1: NEW FPP GPIO API (Primary method - most reliable)
+    $fppGpioUrl = "http://localhost/api/gpio/" . $psuPin;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $fppGpioUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        $gpioData = json_decode($response, true);
+        if ($gpioData && isset($gpioData['Status']) && $gpioData['Status'] === 'OK' && isset($gpioData['value'])) {
+            $value = $gpioData['value'];
+            $methods[] = "fpp_gpio_api_new";
+            return [
+                'status' => $value === 1 ? 'on' : 'off',
+                'method' => 'fpp_gpio_api_new',
+                'pin' => $psuPin,
+                'raw_value' => $value,
+                'response_code' => $httpCode
+            ];
+        }
+    }
     
     // Method 2: Try reading via sysfs (if available)
     $gpiochip = "gpiochip15"; // PCA9554 I2C GPIO expander
@@ -347,18 +370,18 @@ function readGPIOPinStatus($psuPin) {
         }
     }
     
-    // Method 6: Check if we can read from FPP GPIO API directly
+    // Method 6: Check if we can read from old FPP GPIO API 
     // Try to get pin information from FPP's GPIO manager
     $fppGpioUrl = "http://localhost/api/gpio";
     $fppResponse = @file_get_contents($fppGpioUrl);
     if ($fppResponse) {
-        $methods[] = "fpp_gpio_api";
+        $methods[] = "fpp_gpio_api_old";
         // For now, we know FPP controls it but can't read current state
         return [
             'status' => 'unknown',
-            'method' => 'fpp_gpio_api',
+            'method' => 'fpp_gpio_api_old',
             'pin' => $psuPin,
-            'note' => 'Pin controlled by FPP - state available but requires FPP API extension'
+            'note' => 'Pin controlled by FPP - old API method'
         ];
     }
     

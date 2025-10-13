@@ -214,11 +214,6 @@ include_once "/opt/fpp/www/common/menuHead.inc";
             box-shadow: 0 0 3px rgba(108, 117, 125, 0.5);
         }
         
-        .psu-status-controlled {
-            background: #17a2b8;
-            box-shadow: 0 0 3px rgba(23, 162, 184, 0.5);
-        }
-        
         .psu-status-text {
             font-size: 0.7rem;
             font-weight: 500;
@@ -320,8 +315,7 @@ include_once "/opt/fpp/www/common/menuHead.inc";
             <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
                 <div><span class="psu-status-dot psu-status-on" style="display: inline-block; margin-right: 5px;"></span><strong>ON</strong> - PSU powered on</div>
                 <div><span class="psu-status-dot psu-status-off" style="display: inline-block; margin-right: 5px;"></span><strong>OFF</strong> - PSU powered off</div>
-                <div><span class="psu-status-dot psu-status-controlled" style="display: inline-block; margin-right: 5px;"></span><strong>CTRL</strong> - Under FPP control (status monitoring limited)</div>
-                <div><span class="psu-status-dot psu-status-unknown" style="display: inline-block; margin-right: 5px;"></span><strong>UNK</strong> - Status unknown</div>
+                <div><span class="psu-status-dot psu-status-unknown" style="display: inline-block; margin-right: 5px;"></span><strong>UNK</strong> - Status unknown (older FPP version)</div>
             </div>
         </div>
 
@@ -435,10 +429,8 @@ function renderControllers(systems) {
                         ${system.psuStatus && system.psuStatus.length > 0 ? 
                             system.psuStatus.map(psu => {
                                 const statusClass = psu.status === 'on' ? 'psu-status-on' : 
-                                                  psu.status === 'off' ? 'psu-status-off' : 
-                                                  psu.method === 'fpp_controlled' ? 'psu-status-controlled' : 'psu-status-unknown';
-                                const statusText = psu.status === 'unknown' && psu.method === 'fpp_controlled' ? 'CTRL' : 
-                                                 psu.status === 'unknown' ? 'UNK' : psu.status.toUpperCase();
+                                                  psu.status === 'off' ? 'psu-status-off' : 'psu-status-unknown';
+                                const statusText = psu.status === 'unknown' ? 'UNK' : psu.status.toUpperCase();
                                 return `
                                     <div class="psu-status-item">
                                         <div class="psu-status-label">PSU ${psu.psu}</div>

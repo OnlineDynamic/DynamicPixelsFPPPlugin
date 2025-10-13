@@ -294,6 +294,62 @@ $diskUsage = getDiskUsage($systemIp);
             color: #721c24;
         }
 
+        .plugins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .plugin-item {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .plugin-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .plugin-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .plugin-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            color: var(--text-muted);
+        }
+
+        .plugin-hash {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: help;
+        }
+
+        .plugin-date {
+            font-size: 0.9em;
+        }
+
+        .plugin-count {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -370,17 +426,38 @@ $diskUsage = getDiskUsage($systemIp);
                     <span class="info-label">FPP Mode:</span>
                     <span class="info-value"><?php echo htmlspecialchars($systemStatus['mode_name'] ?? 'Unknown'); ?></span>
                 </div>
+                <?php 
+                // Get temperatures from statistics
+                $cpuTemp = null;
+                $caseTemp = null;
+                if ($statistics && isset($statistics['systemInfo']['sensors'])) {
+                    foreach ($statistics['systemInfo']['sensors'] as $sensor) {
+                        if (isset($sensor['valueType']) && $sensor['valueType'] === 'Temperature') {
+                            if (strpos($sensor['label'], 'CPU') !== false) {
+                                $cpuTemp = $sensor['formatted'];
+                            } elseif (preg_match('/D\d+\/\d+/', $sensor['label'])) {
+                                // Match D12/12 Temp, D24/24 Temp, etc.
+                                $caseTemp = $sensor['formatted'];
+                            }
+                        }
+                    }
+                }
+                ?>
+                <?php if ($cpuTemp): ?>
                 <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value"><?php echo htmlspecialchars($systemStatus['status_name'] ?? 'Unknown'); ?></span>
+                    <span class="info-label">CPU Temperature:</span>
+                    <span class="info-value"><?php echo htmlspecialchars($cpuTemp); ?>°C</span>
                 </div>
+                <?php endif; ?>
+                <?php if ($caseTemp): ?>
+                <div class="info-row">
+                    <span class="info-label">Case Temperature:</span>
+                    <span class="info-value"><?php echo htmlspecialchars($caseTemp); ?>°C</span>
+                </div>
+                <?php endif; ?>
                 <div class="info-row">
                     <span class="info-label">Uptime:</span>
                     <span class="info-value"><?php echo htmlspecialchars($systemStatus['uptimeStr'] ?? 'Unknown'); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Volume:</span>
-                    <span class="info-value"><?php echo htmlspecialchars(($systemStatus['volume'] ?? 'N/A') . '%'); ?></span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Time:</span>
@@ -427,6 +504,10 @@ $diskUsage = getDiskUsage($systemIp);
                     <span class="info-label">Status:</span>
                     <span class="info-value"><?php echo htmlspecialchars($systemStatus['status_name'] ?? 'Unknown'); ?></span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">Volume:</span>
+                    <span class="info-value"><?php echo htmlspecialchars(($systemStatus['volume'] ?? 'N/A') . '%'); ?></span>
+                </div>
                 <?php if (isset($systemStatus['current_playlist']['playlist']) && !empty($systemStatus['current_playlist']['playlist'])): ?>
                 <div class="info-row">
                     <span class="info-label">Playlist:</span>
@@ -468,15 +549,36 @@ $diskUsage = getDiskUsage($systemIp);
         <div class="monitor-card">
             <h2>⚡ PSU Status</h2>
             <?php if ($psuStatus && isset($psuStatus['psus'])): ?>
+                <?php 
+                // Extract current sensor data from statistics
+                $currentSensors = array();
+                if ($statistics && isset($statistics['systemInfo']['sensors'])) {
+                    foreach ($statistics['systemInfo']['sensors'] as $sensor) {
+                        if (isset($sensor['valueType']) && $sensor['valueType'] === 'Current') {
+                            // Extract PSU number from label (e.g., "PSU1: " -> "1")
+                            if (preg_match('/PSU(\d+)/', $sensor['label'], $matches)) {
+                                $currentSensors[$matches[1]] = $sensor;
+                            }
+                        }
+                    }
+                }
+                ?>
+                
                 <?php foreach ($psuStatus['psus'] as $psu): ?>
                 <div class="info-row">
                     <span class="info-label">PSU <?php echo htmlspecialchars($psu['psu']); ?>:</span>
                     <span class="info-value">
                         <span class="status-indicator <?php echo ($psu['status'] === 'on') ? 'status-online' : (($psu['status'] === 'off') ? 'status-offline' : 'status-warning'); ?>"></span>
                         <?php echo htmlspecialchars(ucfirst($psu['status'])); ?>
+                        <?php if (isset($currentSensors[$psu['psu']])): ?>
+                            <span style="margin-left: 10px; color: #667eea; font-weight: 600;">
+                                <?php echo htmlspecialchars($currentSensors[$psu['psu']]['formatted']); ?>
+                            </span>
+                        <?php endif; ?>
                     </span>
                 </div>
                 <?php endforeach; ?>
+                
                 <div class="info-row">
                     <span class="info-label">Controller:</span>
                     <span class="info-value"><?php echo htmlspecialchars($psuStatus['controller'] ?? 'Unknown'); ?></span>
@@ -489,43 +591,72 @@ $diskUsage = getDiskUsage($systemIp);
         <!-- System Resources Card -->
         <div class="monitor-card">
             <h2>💾 System Resources</h2>
-            <?php if ($statistics && isset($statistics['systemInfo'])): ?>
+            <?php if ($statistics && isset($statistics['systemInfo']['utilization'])): ?>
                 <?php 
-                $sysInfo = $statistics['systemInfo'];
-                $memUsed = isset($sysInfo['memoryUsed']) ? $sysInfo['memoryUsed'] : 0;
-                $memTotal = isset($sysInfo['memoryTotal']) ? $sysInfo['memoryTotal'] : 0;
-                $memUsedPercent = $memTotal > 0 ? ($memUsed / $memTotal) * 100 : 0;
-                $progressClass = $memUsedPercent < 60 ? 'progress-low' : ($memUsedPercent < 80 ? 'progress-medium' : 'progress-high');
+                $utilization = $statistics['systemInfo']['utilization'];
+                $memUsedPercent = isset($utilization['Memory']) ? $utilization['Memory'] : 0;
+                $cpuUsagePercent = isset($utilization['CPU']) ? $utilization['CPU'] : 0;
+                $diskInfo = isset($utilization['Disk']['Root']) ? $utilization['Disk']['Root'] : null;
+                $diskUsedPercent = 0;
+                if ($diskInfo && $diskInfo['Total'] > 0) {
+                    $diskUsedPercent = (($diskInfo['Total'] - $diskInfo['Free']) / $diskInfo['Total']) * 100;
+                }
+                
+                $memProgressClass = $memUsedPercent < 60 ? 'progress-low' : ($memUsedPercent < 80 ? 'progress-medium' : 'progress-high');
+                $cpuProgressClass = $cpuUsagePercent < 60 ? 'progress-low' : ($cpuUsagePercent < 80 ? 'progress-medium' : 'progress-high');
+                $diskProgressClass = $diskUsedPercent < 60 ? 'progress-low' : ($diskUsedPercent < 80 ? 'progress-medium' : 'progress-high');
                 ?>
                 
+                <!-- CPU Usage -->
                 <div class="info-row">
+                    <span class="info-label">CPU Usage:</span>
+                    <span class="info-value"><?php echo number_format($cpuUsagePercent, 1); ?>%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill <?php echo $cpuProgressClass; ?>" style="width: <?php echo $cpuUsagePercent; ?>%">
+                        <?php echo number_format($cpuUsagePercent, 1); ?>%
+                    </div>
+                </div>
+                
+                <!-- Memory Usage -->
+                <div class="info-row" style="margin-top: 15px;">
                     <span class="info-label">Memory Usage:</span>
                     <span class="info-value"><?php echo number_format($memUsedPercent, 1); ?>%</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill <?php echo $progressClass; ?>" style="width: <?php echo $memUsedPercent; ?>%">
+                    <div class="progress-fill <?php echo $memProgressClass; ?>" style="width: <?php echo $memUsedPercent; ?>%">
                         <?php echo number_format($memUsedPercent, 1); ?>%
                     </div>
                 </div>
                 
-                <?php if (isset($sysInfo['cpuUsage'])): ?>
-                <div class="info-row">
-                    <span class="info-label">CPU Usage:</span>
-                    <span class="info-value"><?php echo number_format($sysInfo['cpuUsage'], 1); ?>%</span>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (isset($sysInfo['diskUsage'])): ?>
-                <div class="info-row">
+                <!-- Disk Usage -->
+                <?php if ($diskInfo): ?>
+                <div class="info-row" style="margin-top: 15px;">
                     <span class="info-label">Disk Usage:</span>
-                    <span class="info-value"><?php echo number_format($sysInfo['diskUsage'], 1); ?>%</span>
+                    <span class="info-value"><?php echo number_format($diskUsedPercent, 1); ?>% (<?php echo number_format(($diskInfo['Total'] - $diskInfo['Free']) / 1073741824, 1); ?> / <?php echo number_format($diskInfo['Total'] / 1073741824, 1); ?> GB)</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill <?php echo $diskProgressClass; ?>" style="width: <?php echo $diskUsedPercent; ?>%">
+                        <?php echo number_format($diskUsedPercent, 1); ?>%
+                    </div>
                 </div>
                 <?php endif; ?>
                 
-                <div class="info-row">
+                <!-- Platform Info -->
+                <?php if (isset($statistics['systemInfo']['platform'])): ?>
+                <div class="info-row" style="margin-top: 15px;">
                     <span class="info-label">Platform:</span>
-                    <span class="info-value"><?php echo htmlspecialchars($sysInfo['platform'] . ' ' . $sysInfo['platformVariant']); ?></span>
+                    <span class="info-value"><?php echo htmlspecialchars($statistics['systemInfo']['platform'] . ' ' . $statistics['systemInfo']['platformVariant']); ?></span>
                 </div>
+                <?php endif; ?>
+                
+                <!-- Uptime -->
+                <?php if (isset($utilization['Uptime'])): ?>
+                <div class="info-row">
+                    <span class="info-label">Uptime:</span>
+                    <span class="info-value"><?php echo htmlspecialchars($utilization['Uptime']); ?></span>
+                </div>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="error-message">System resources unavailable</div>
             <?php endif; ?>
@@ -539,10 +670,17 @@ $diskUsage = getDiskUsage($systemIp);
                     <span class="info-label">Hostname:</span>
                     <span class="info-value"><?php echo htmlspecialchars($systemInfo['HostName'] ?? 'Unknown'); ?></span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">IP Address:</span>
-                    <span class="info-value"><?php echo htmlspecialchars($systemInfo['LocalAddress'] ?? $ip); ?></span>
-                </div>
+                <?php if (isset($systemInfo['IPs']) && is_array($systemInfo['IPs']) && count($systemInfo['IPs']) > 0): ?>
+                    <div class="info-row">
+                        <span class="info-label">IP Address<?php echo count($systemInfo['IPs']) > 1 ? 'es' : ''; ?>:</span>
+                        <span class="info-value"><?php echo htmlspecialchars(implode(', ', $systemInfo['IPs'])); ?></span>
+                    </div>
+                <?php else: ?>
+                    <div class="info-row">
+                        <span class="info-label">IP Address:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($ip); ?></span>
+                    </div>
+                <?php endif; ?>
                 <?php if (isset($systemInfo['Platform'])): ?>
                 <div class="info-row">
                     <span class="info-label">Platform:</span>
@@ -640,6 +778,41 @@ $diskUsage = getDiskUsage($systemIp);
             <?php if (isset($playerStatus['sensors']) && count($playerStatus['sensors']) == 0): ?>
             <div class="info-message">No sensors detected</div>
             <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- Installed Plugins Card -->
+        <?php if ($statistics && isset($statistics['plugins'])): ?>
+        <div class="monitor-card large-card">
+            <h2>🔌 Installed Plugins</h2>
+            <div class="plugins-grid">
+                <?php 
+                $plugins = $statistics['plugins'];
+                ksort($plugins); // Sort alphabetically
+                foreach ($plugins as $pluginName => $pluginInfo): 
+                    // Format the plugin name nicely
+                    $displayName = str_replace(['fpp-plugin-', 'fpp-', 'FPP-Plugin-'], '', $pluginName);
+                    $displayName = str_replace('-', ' ', $displayName);
+                    $displayName = ucwords($displayName);
+                    
+                    // Format the commit date
+                    $commitDate = isset($pluginInfo['commitDate']) ? date('M j, Y', strtotime($pluginInfo['commitDate'])) : 'Unknown';
+                    $shortHash = isset($pluginInfo['hash']) ? substr($pluginInfo['hash'], 0, 7) : 'N/A';
+                ?>
+                    <div class="plugin-item">
+                        <div class="plugin-name"><?php echo htmlspecialchars($displayName); ?></div>
+                        <div class="plugin-details">
+                            <span class="plugin-hash" title="<?php echo htmlspecialchars($pluginInfo['hash'] ?? 'N/A'); ?>">
+                                <?php echo htmlspecialchars($shortHash); ?>
+                            </span>
+                            <span class="plugin-date"><?php echo htmlspecialchars($commitDate); ?></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="plugin-count">
+                Total: <?php echo count($plugins); ?> plugin<?php echo count($plugins) !== 1 ? 's' : ''; ?> installed
+            </div>
         </div>
         <?php endif; ?>
     </div>
