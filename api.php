@@ -546,6 +546,7 @@ function fppDynamicPixelsNetworkDiscover() {
     $result['discoveredSystems'] = array();
     $result['dynamicPixelsSystems'] = array();
     $result['summary'] = array();
+    $result['_debug_version'] = 'v3-simplified-hostname-dedup';
     
     // Get all systems from FPP MultiSync API
     $multiSyncUrl = "http://localhost/api/fppd/multiSyncSystems";
@@ -572,25 +573,32 @@ function fppDynamicPixelsNetworkDiscover() {
     
     $result['discoveredSystems'] = $multiSyncData['systems'];
     
-    // Deduplicate systems by UUID and consolidate IP addresses
-    $systemsByUuid = array();
+    // Deduplicate systems - each unique system should remain separate
+    // Only merge IPs if they are truly the same system (same hostname)
+    // DEBUG: Simplified deduplication v2
+    $systemsByHostname = array();
     
     foreach ($multiSyncData['systems'] as $system) {
-        $uuid = isset($system['uuid']) ? $system['uuid'] : $system['address']; // fallback to address if no UUID
         $address = $system['address'];
-        $hostname = isset($system['hostname']) ? $system['hostname'] : 'Unknown';
+        $hostname = isset($system['hostname']) ? $system['hostname'] : 'Unknown-' . $address;
         
-        if (!isset($systemsByUuid[$uuid])) {
-            // First time seeing this UUID
-            $systemsByUuid[$uuid] = $system;
-            $systemsByUuid[$uuid]['addresses'] = array($address);
+        // Use hostname as the unique key
+        // Systems with different hostnames are always separate
+        if (!isset($systemsByHostname[$hostname])) {
+            // First time seeing this hostname
+            $systemsByHostname[$hostname] = $system;
+            $systemsByHostname[$hostname]['addresses'] = array($address);
         } else {
-            // We've seen this UUID before, add this IP to the addresses array
-            if (!in_array($address, $systemsByUuid[$uuid]['addresses'])) {
-                array_push($systemsByUuid[$uuid]['addresses'], $address);
+            // Same hostname - add this IP address
+            if (!in_array($address, $systemsByHostname[$hostname]['addresses'])) {
+                array_push($systemsByHostname[$hostname]['addresses'], $address);
             }
         }
     }
+    
+    // Use hostname-deduplicated systems
+    $systemsByUuid = $systemsByHostname;
+    $result['_debug_dedup_count'] = count($systemsByUuid);
     
     // Check each unique system for DynamicPixels cape info
     foreach ($systemsByUuid as $uuid => $system) {
