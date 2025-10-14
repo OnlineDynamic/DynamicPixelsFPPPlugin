@@ -238,6 +238,21 @@ include_once "/opt/fpp/www/common/menuHead.inc";
             color: white;
         }
         
+        .psu-toggle-btn {
+            font-weight: 600;
+            transition: all 0.3s ease;
+            transform: scale(1);
+        }
+        
+        .psu-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .psu-toggle-btn:active {
+            transform: scale(0.95);
+        }
+        
         .status-indicator {
             display: inline-block;
             width: 8px;
@@ -453,9 +468,22 @@ function renderControllers(systems) {
                         }
                     </div>
                     <div class="psu-controls">
-                        ${Array.from({length: system.psuCount}, (_, i) => 
-                            `<button class="psu-btn" onclick="controlPSU('${system.primaryAddress}', ${i + 1}, 'on')">PSU ${i + 1} ON</button>`
-                        ).join('')}
+                        ${system.psuStatus && system.psuStatus.length > 0 ? 
+                            system.psuStatus.map(psu => {
+                                const isOn = psu.status === 'on';
+                                const toggleAction = isOn ? 'off' : 'on';
+                                const buttonColor = isOn ? '#e74c3c' : '#27ae60';
+                                const buttonText = isOn ? 'OFF' : 'ON';
+                                return `<button class="psu-btn psu-toggle-btn" 
+                                    onclick="togglePSU('${system.primaryAddress}', ${psu.psu}, '${toggleAction}', '${psu.status}')" 
+                                    style="background: ${buttonColor}; color: white; border-color: ${buttonColor};">
+                                    PSU ${psu.psu} ${buttonText}
+                                </button>`;
+                            }).join('') :
+                            Array.from({length: system.psuCount}, (_, i) => 
+                                `<button class="psu-btn psu-toggle-btn" onclick="togglePSU('${system.primaryAddress}', ${i + 1}, 'on', 'unknown')">PSU ${i + 1} ON</button>`
+                            ).join('')
+                        }
                         <button class="psu-btn" onclick="controlAllPSUs('${system.primaryAddress}', 'on')" style="background: #27ae60; color: white; border-color: #27ae60;">All ON</button>
                         <button class="psu-btn" onclick="controlAllPSUs('${system.primaryAddress}', 'off')" style="background: #e74c3c; color: white; border-color: #e74c3c;">All OFF</button>
                         <button class="psu-btn" onclick="openSystemMonitor('${system.primaryAddress}', '${system.hostname}')" style="background: #667eea; color: white; border-color: #667eea; margin-top: 10px; width: 100%;">📊 System Monitor</button>
@@ -504,7 +532,14 @@ function refreshNetworkData() {
         });
 }
 
-function controlPSU(address, psu, action) {
+function togglePSU(address, psu, action, currentStatus) {
+    // If turning off, confirm with user
+    if (action === 'off') {
+        if (!confirm(`Are you sure you want to turn OFF PSU ${psu}?\n\nThis will cut power to any devices connected to this PSU.`)) {
+            return; // User cancelled
+        }
+    }
+    
     const url = `http://${address}/api/plugin/fpp-plugin-DynamicPixels/psu/${psu}/${action}`;
     
     fetch(url)
@@ -516,14 +551,23 @@ function controlPSU(address, psu, action) {
                 setTimeout(refreshNetworkData, 500);
             } else {
                 console.error(`PSU ${psu} ${action} failed on ${address}:`, data);
+                alert(`Failed to ${action} PSU ${psu}. Check console for details.`);
             }
         })
         .catch(error => {
             console.error(`Error controlling PSU ${psu} on ${address}:`, error);
+            alert(`Error controlling PSU ${psu}. Check console for details.`);
         });
 }
 
 function controlAllPSUs(address, action) {
+    // If turning off all PSUs, confirm with user
+    if (action === 'off') {
+        if (!confirm(`⚠️ WARNING: Turn OFF ALL PSUs?\n\nThis will cut power to ALL devices connected to this controller.\n\nAre you sure you want to continue?`)) {
+            return; // User cancelled
+        }
+    }
+    
     const url = `http://${address}/api/plugin/fpp-plugin-DynamicPixels/psu/all/${action}`;
     
     fetch(url)
