@@ -1,3 +1,10 @@
+// Include drogon framework header before FPP headers to avoid
+// macro conflicts between trantor's LOG_* macros and FPP's LogLevel enum
+#include <drogon/HttpAppFramework.h>
+#undef LOG_WARN
+#undef LOG_INFO
+#undef LOG_DEBUG
+
 #include <fpp-pch.h>
 
 #include <fstream>
@@ -14,7 +21,7 @@
 #include <thread>
 #include <cmath>
 
-#include <httpserver.hpp>
+#include "fpphttp.h"
 #include "common.h"
 #include "settings.h"
 #include "Plugin.h"
@@ -26,7 +33,7 @@
 #include "fppversion_defines.h"
 #include "commands/Commands.h"
 
-class FPPDynamicPixelsPlugin : public FPPPlugins::Plugin, public FPPPlugins::ChannelDataPlugin, public FPPPlugins::APIProviderPlugin, public httpserver::http_resource
+class FPPDynamicPixelsPlugin : public FPPPlugins::Plugin, public FPPPlugins::ChannelDataPlugin, public FPPPlugins::APIProviderPlugin
 {
 public:
     FPPDynamicPixelsPlugin() : FPPPlugins::Plugin("fpp-plugin-DynamicPixels"), FPPPlugins::ChannelDataPlugin(), FPPPlugins::APIProviderPlugin()
@@ -126,23 +133,31 @@ public:
         CommandManager::INSTANCE.addCommand(new FadeBrightnessCommand(this));
     }
 
-    virtual HTTP_RESPONSE_CONST std::shared_ptr<httpserver::http_response> render_GET(const httpserver::http_request &req) override
+    void handleBrightnessRequest(const HttpRequestPtr &req,
+                                 std::function<void(const HttpResponsePtr &)> &&callback)
     {
-        std::string p0 = req.get_path_pieces()[0];
-        int plen = req.get_path_pieces().size();
-        if (plen > 1)
+        std::string path = req->path();
+        std::vector<std::string> pieces;
+        std::istringstream ss(path);
+        std::string piece;
+        while (std::getline(ss, piece, '/'))
+        {
+            if (!piece.empty())
+                pieces.push_back(piece);
+        }
+
+        if (pieces.size() > 1)
         {
             std::vector<std::string> vals;
-            for (int x = 1; x < req.get_path_pieces().size(); x++)
+            for (size_t x = 1; x < pieces.size(); x++)
             {
-                std::string p1 = req.get_path_pieces()[x];
-                vals.push_back(p1);
+                vals.push_back(pieces[x]);
             }
             setBrightness(vals);
         }
 
         std::string v = std::to_string(brightness);
-        return std::shared_ptr<httpserver::http_response>(new httpserver::string_response(v, 200));
+        callback(makeStringResponse(v, 200));
     }
     virtual void multiSyncData(const uint8_t *data, int len) override
     {
@@ -225,13 +240,20 @@ public:
             startFadeTime = -1;
         }
     }
-    void unregisterApis(httpserver::webserver *m_ws) override
+    void unregisterApis() override
     {
-        m_ws->unregister_resource("/Brightness");
+        // Drogon does not support route removal; routes become inactive when the plugin unloads
     }
-    void registerApis(httpserver::webserver *m_ws) override
+    void registerApis() override
     {
-        m_ws->register_resource("/Brightness", this, true);
+        auto handler = [this](const HttpRequestPtr &req,
+                              std::function<void(const HttpResponsePtr &)> &&callback)
+        {
+            handleBrightnessRequest(req, std::move(callback));
+        };
+
+        drogon::app().registerHandler("/Brightness", handler, {drogon::Get});
+        drogon::app().registerHandlerViaRegex("/Brightness/.*", handler, {drogon::Get});
 
         std::function<void(const std::string &topic, const std::string &payload)> f = [this](const std::string &topic, const std::string &payload)
         {
