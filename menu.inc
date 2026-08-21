@@ -1,6 +1,6 @@
 <?php
-require_once 'common.php';
-require_once 'config.php';
+require_once '/opt/fpp/www/common.php';
+require_once '/opt/fpp/www/config.php';
 
 # $menuEntries is an array of menu entries for this plugin
 # text - menu entry text
