@@ -24,5 +24,15 @@
 			"branch": "master",
 			"sha": ""
 		}
-	]
+	],
+	    "privacy": {
+        "summary": "Runs on this device only.",
+        "sends": [],
+        "collects": [],
+        "sensors": [],
+        "remoteAccess": "none",
+        "systemChanges": [],
+        "closedCode": false,
+        "other": "none"
+    }
 }
