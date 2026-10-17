@@ -64,15 +64,23 @@ $menuEntries = Array(
 # It is expected that two variables are alread set:
 # $plugin - contains the name of the current plugin directory/repoName
 # $menu - contains the name of the menu section/type
+$currentCapeInfo = null;
 foreach ($menuEntries as $entry)
 {
 	if ($entry['type'] != $menu)
 		continue;
 
-        $currentCapeInfo = json_decode(file_get_contents("http://localhost/api/cape"), true);
-
-        if ( !in_array($entry['controllerModel'], array($currentCapeInfo['name'] ,'all'), true ) )
-		continue;
+	if ($entry['controllerModel'] != 'all') {
+		// Only look up the cape once, and only if an entry needs it
+		if ($currentCapeInfo === null) {
+			$currentCapeInfo = json_decode(@file_get_contents("http://localhost/api/cape"), true);
+			if (!is_array($currentCapeInfo))
+				$currentCapeInfo = array();
+		}
+		$capeName = isset($currentCapeInfo['name']) ? $currentCapeInfo['name'] : '';
+		if ($entry['controllerModel'] !== $capeName)
+			continue;
+	}
 
 	if (preg_match('/^http.?:\/\//', $entry['page']))
 	{

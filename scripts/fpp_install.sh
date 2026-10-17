@@ -6,7 +6,9 @@ BASEDIR=$(dirname $0)
 cd $BASEDIR
 cd ..
 
-make "SRCDIR=${SRCDIR}"
+# Older versions of this plugin built a C++ brightness library which is no
+# longer part of the plugin, remove any stale copy so fppd doesn't load it
+rm -f libfpp-plugin-DynamicPixels.so src/*.o src/*.d
 
 
 . ${FPPDIR}/scripts/common

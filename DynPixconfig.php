@@ -3,7 +3,6 @@
 
 include_once "/opt/fpp/www/common.php";
 include_once 'functions.inc.php';
-include_once 'version.inc';
 
 $pluginName = basename(dirname(__FILE__));
 

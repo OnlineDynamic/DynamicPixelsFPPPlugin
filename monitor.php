@@ -2,12 +2,18 @@
 include_once(__DIR__ . '/logo_base64.php');
 
 // Get system IP from URL parameter
-$systemIp = isset($_GET['ip']) ? $_GET['ip'] : 'localhost';
+$systemIp = isset($_GET['ip']) ? trim($_GET['ip']) : 'localhost';
+// Only allow an IP address or plain hostname so the value can't be used to
+// build arbitrary URLs in the server side requests below
+if (!filter_var($systemIp, FILTER_VALIDATE_IP) && !preg_match('/^[A-Za-z0-9]([A-Za-z0-9.-]{0,252})$/', $systemIp)) {
+    $systemIp = 'localhost';
+}
 $systemName = isset($_GET['name']) ? $_GET['name'] : 'Local System';
 
 // Function to make API calls to the target system
 function makeApiCall($ip, $endpoint, $timeout = 5) {
-    $url = "http://{$ip}{$endpoint}";
+    $host = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? "[{$ip}]" : $ip;
+    $url = "http://{$host}{$endpoint}";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);

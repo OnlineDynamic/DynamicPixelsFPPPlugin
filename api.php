@@ -1,7 +1,5 @@
 <?php
 include_once("/opt/fpp/www/common.php");
-$pluginName = "fpp-plugin-DynamicPixels";
-$pluginConfigFile = $settings['configDirectory'] . "/plugin." . $pluginName;
 
 /*
 A way for plugins to provide their own PHP API endpoints.
@@ -84,7 +82,7 @@ function getEndpointsfpppluginDynamicPixels() {
 // GET /api/plugin/fpp-DynamicPixels/version
 function fppDynamicPixelsVersion() {
     $result = array();
-    $result['version'] = 'fpp-DynamicPixels v2.0';
+    $result['version'] = 'fpp-plugin-DynamicPixels v2.1';
 
     return json($result);
 }
@@ -100,138 +98,156 @@ function loadPSUConfig() {
     return json_decode($configData, true);
 }
 
+// Helper to fetch a URL on this FPP instance, returns array(httpCode, body)
+function dpLocalRequest($url, $method = 'GET', $body = null, $timeout = 2) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    if ($method !== 'GET') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    }
+    if ($body !== null) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+    }
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    return array($httpCode, $response, $error);
+}
+
+// Helper to read the installed cape name/version
+function readCapeInfo() {
+    $capeInfoFile = '/home/fpp/media/tmp/cape-info.json';
+    if (file_exists($capeInfoFile)) {
+        $capeInfo = json_decode(file_get_contents($capeInfoFile), true);
+        if (is_array($capeInfo) && isset($capeInfo['name'])) {
+            return $capeInfo;
+        }
+    }
+    list($code, $response) = dpLocalRequest("http://localhost/api/cape");
+    if ($code === 200 && $response) {
+        $capeInfo = json_decode($response, true);
+        if (is_array($capeInfo) && isset($capeInfo['name'])) {
+            return $capeInfo;
+        }
+    }
+    return null;
+}
+
 // Helper function to detect which controller is installed
 function detectInstalledController() {
     $config = loadPSUConfig();
     if (!$config || !isset($config['Controllers'])) {
         return null;
     }
-    
-    // Try to read cape-info.json for accurate hardware detection
-    $capeInfoFile = '/home/fpp/media/tmp/cape-info.json';
-    if (file_exists($capeInfoFile)) {
-        $capeInfoData = file_get_contents($capeInfoFile);
-        $capeInfo = json_decode($capeInfoData, true);
-        
-        if ($capeInfo && isset($capeInfo['name']) && isset($capeInfo['version'])) {
-            $capeName = $capeInfo['name'];
-            $capeVersion = $capeInfo['version'];
-            
-            // Look for matching controller in our configuration
-            foreach ($config['Controllers'] as $controller) {
-                if ($controller['Controller'] === $capeName) {
-                    foreach ($controller['Variants'] as $variant) {
-                        if ($variant['variant'] === $capeVersion) {
-                            return array(
-                                'controller' => $controller['Controller'],
-                                'variant' => $variant['variant'],
-                                'config' => $variant,
-                                'detection_method' => 'cape-info.json'
-                            );
-                        }
-                    }
+
+    // 1. Match on the cape EEPROM name (and version if possible)
+    $capeInfo = readCapeInfo();
+    if ($capeInfo) {
+        $capeName = $capeInfo['name'];
+        $capeVersion = isset($capeInfo['version']) ? $capeInfo['version'] : '';
+
+        foreach ($config['Controllers'] as $controller) {
+            if ($controller['Controller'] !== $capeName) {
+                continue;
+            }
+            foreach ($controller['Variants'] as $variant) {
+                if ($variant['variant'] === $capeVersion) {
+                    return array(
+                        'controller' => $controller['Controller'],
+                        'variant' => $variant['variant'],
+                        'config' => $variant,
+                        'detection_method' => 'cape-info.json'
+                    );
                 }
             }
+            // Known controller but unknown board revision, use the latest variant we know of
+            $variant = end($controller['Variants']);
+            return array(
+                'controller' => $controller['Controller'],
+                'variant' => $variant['variant'],
+                'config' => $variant,
+                'detection_method' => 'cape-name'
+            );
         }
     }
-    
-    // Fallback to GPIO pin detection if cape-info.json not available or no match
+
+    // 2. Fall back to checking which control pins FPP knows about.  Check the
+    //    variants with the most pins first so a D24 (3 PSUs) isn't reported as
+    //    a D12 (2 PSUs) just because they share pins.
+    $availablePins = getAvailableGPIOPins();
+    if (empty($availablePins)) {
+        return null;
+    }
+    $candidates = array();
     foreach ($config['Controllers'] as $controller) {
         foreach ($controller['Variants'] as $variant) {
-            $allPinsExist = true;
-            
-            // Check if ALL GPIO pins for this controller variant exist
-            foreach ($variant['controlpins'] as $psuConfig) {
-                $gpiopin = $psuConfig['gpiopin'];
-                if (!checkGPIOPinExists($gpiopin)) {
-                    $allPinsExist = false;
-                    break;
-                }
+            $candidates[] = array('controller' => $controller['Controller'], 'variant' => $variant);
+        }
+    }
+    usort($candidates, function ($a, $b) {
+        return count($b['variant']['controlpins']) - count($a['variant']['controlpins']);
+    });
+    foreach ($candidates as $candidate) {
+        $allPinsExist = true;
+        foreach ($candidate['variant']['controlpins'] as $psuConfig) {
+            if (!in_array($psuConfig['gpiopin'], $availablePins, true)) {
+                $allPinsExist = false;
+                break;
             }
-            
-            // If all pins exist for this controller, it's likely the correct one
-            if ($allPinsExist) {
-                return array(
-                    'controller' => $controller['Controller'],
-                    'variant' => $variant['variant'],
-                    'config' => $variant,
-                    'detection_method' => 'gpio_fallback'
-                );
+        }
+        if ($allPinsExist) {
+            return array(
+                'controller' => $candidate['controller'],
+                'variant' => $candidate['variant']['variant'],
+                'config' => $candidate['variant'],
+                'detection_method' => 'gpio_fallback'
+            );
+        }
+    }
+
+    // Not a DynamicPixels controller - don't guess, as that would drive the wrong pins
+    return null;
+}
+
+// Helper to get the list of GPIO pin names FPP knows about
+function getAvailableGPIOPins() {
+    static $pins = null;
+    if ($pins !== null) {
+        return $pins;
+    }
+    $pins = array();
+    list($code, $response) = dpLocalRequest("http://localhost/api/gpio");
+    if ($code === 200 && $response) {
+        $gpioData = json_decode($response, true);
+        if (is_array($gpioData)) {
+            foreach ($gpioData as $gpio) {
+                if (isset($gpio['pin'])) {
+                    $pins[] = $gpio['pin'];
+                }
             }
         }
     }
-    
-    // Final fallback: return first controller if all detection fails
-    $firstController = $config['Controllers'][0];
-    $firstVariant = $firstController['Variants'][0];
-    return array(
-        'controller' => $firstController['Controller'],
-        'variant' => $firstVariant['variant'],
-        'config' => $firstVariant,
-        'detection_method' => 'default_fallback'
-    );
+    return $pins;
 }
 
 // Helper function to check if GPIO pin exists
 function checkGPIOPinExists($gpiopin) {
-    // Method 1: Try to call FPP's GPIO status API to see if pin exists
-    $url = "http://localhost/api/gpio";
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200 && $response) {
-        $gpioData = json_decode($response, true);
-        if ($gpioData && is_array($gpioData)) {
-            // Check if our GPIO pin is in the available pins
-            foreach ($gpioData as $gpio) {
-                if (isset($gpio['pin']) && $gpio['pin'] === $gpiopin) {
-                    return true;
-                }
-            }
-        }
-    }
-    
-    // Method 2: Try to test the GPIO pin by attempting to read its status
-    $testUrl = "http://localhost/api/command/GPIO/{$gpiopin}/status";
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $testUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    // If we get a valid response (not 404), the pin likely exists
-    return ($httpCode === 200);
+    return in_array($gpiopin, getAvailableGPIOPins(), true);
 }
 
 // Helper function to execute FPP GPIO command via REST API
 function executeGPIOCommand($gpiopin, $action) {
-    $url = "http://localhost/api/command/GPIO/{$gpiopin}/{$action}";
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    
+    $data = json_encode(array(
+        'command' => 'GPIO',
+        'args' => array($gpiopin, $action === 'on' ? 'On' : 'Off')
+    ));
+    list($httpCode, $response, $error) = dpLocalRequest("http://localhost/api/command", 'POST', $data, 5);
+
     return array(
         'success' => ($httpCode === 200),
         'httpCode' => $httpCode,
@@ -267,134 +283,57 @@ function fppDynamicPixelsGetControllerInfo() {
     return json($result);
 }
 
-// Helper function to read GPIO pin status using various methods
+// Helper function to read GPIO pin status
+//
+// Only read-only methods are used here.  Tools such as gpioget request the line
+// and can flip an output to an input, which would drop the PSU.
 function readGPIOPinStatus($psuPin) {
-    // Try multiple methods to read GPIO state
-    $methods = [];
-    
-    // Method 1: NEW FPP GPIO API (Primary method - most reliable)
-    $fppGpioUrl = "http://localhost/api/gpio/" . $psuPin;
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $fppGpioUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200 && $response) {
+    $methods = array();
+
+    // Method 1: FPP GPIO API - returns the last value FPP set on the pin
+    $methods[] = 'fpp_gpio_api';
+    list($httpCode, $response) = dpLocalRequest("http://localhost/api/gpio/" . rawurlencode($psuPin));
+    if ($response) {
         $gpioData = json_decode($response, true);
-        if ($gpioData && isset($gpioData['Status']) && $gpioData['Status'] === 'OK' && isset($gpioData['value'])) {
-            $value = $gpioData['value'];
-            $methods[] = "fpp_gpio_api_new";
-            return [
+        if ($httpCode === 200 && $gpioData && isset($gpioData['Status']) && $gpioData['Status'] === 'OK' && isset($gpioData['value'])) {
+            $value = intval($gpioData['value']);
+            return array(
                 'status' => $value === 1 ? 'on' : 'off',
-                'method' => 'fpp_gpio_api_new',
+                'method' => 'fpp_gpio_api',
                 'pin' => $psuPin,
                 'raw_value' => $value,
                 'response_code' => $httpCode
-            ];
+            );
         }
     }
-    
-    // Method 2: Try reading via sysfs (if available)
-    $gpiochip = "gpiochip15"; // PCA9554 I2C GPIO expander
-    $pinNum = substr($psuPin, -1); // Extract pin number (0, 1, 2)
-    
-    // First try to read the value file directly
-    $valueFile = "/sys/class/gpio/gpio" . (633 + intval($pinNum)) . "/value";
-    if (file_exists($valueFile)) {
-        $value = trim(file_get_contents($valueFile));
-        if ($value === "0" || $value === "1") {
-            $methods[] = "sysfs_direct";
-            return [
-                'status' => $value === "1" ? 'on' : 'off',
-                'method' => 'sysfs_direct',
-                'pin' => $psuPin,
-                'raw_value' => $value
-            ];
-        }
-    }
-    
-    // Method 3: Try using i2c direct read (if not busy)
-    // PCA9554 input register is at 0x00
-    $cmd = "i2cget -y 1 0x39 0x00 2>/dev/null";
-    $output = shell_exec($cmd);
-    if ($output !== null && trim($output) !== '') {
-        $hexValue = trim($output);
-        if (preg_match('/0x([0-9a-fA-F]{2})/', $hexValue, $matches)) {
+
+    // Method 2: read the I2C expander input register directly.  Pin names are
+    // <bus>-<address>-<line>, eg 1-0039-2.  This fails harmlessly if the kernel
+    // driver owns the device.
+    if (preg_match('/^(\d+)-([0-9a-fA-F]{4})-(\d+)$/', $psuPin, $m)) {
+        $methods[] = 'i2c_direct';
+        $cmd = "i2cget -y " . intval($m[1]) . " 0x" . substr($m[2], 2) . " 0x00 2>/dev/null";
+        $output = shell_exec($cmd);
+        if ($output !== null && preg_match('/0x([0-9a-fA-F]{2})/', trim($output), $matches)) {
             $byteValue = hexdec($matches[1]);
-            $bitValue = ($byteValue >> intval($pinNum)) & 1;
-            $methods[] = "i2c_direct";
-            return [
+            $bitValue = ($byteValue >> intval($m[3])) & 1;
+            return array(
                 'status' => $bitValue ? 'on' : 'off',
                 'method' => 'i2c_direct',
                 'pin' => $psuPin,
                 'raw_value' => $bitValue,
-                'register_value' => $hexValue
-            ];
+                'register_value' => trim($output)
+            );
         }
     }
-    
-    // Method 4: Try gpioget (if GPIO not busy)
-    $cmd = "gpioget --chip=$gpiochip $pinNum 2>/dev/null";
-    $output = shell_exec($cmd);
-    if ($output !== null && trim($output) !== '') {
-        $value = trim($output);
-        if ($value === "0" || $value === "1") {
-            $methods[] = "gpioget";
-            return [
-                'status' => $value === "1" ? 'on' : 'off',
-                'method' => 'gpioget',
-                'pin' => $psuPin,
-                'raw_value' => $value
-            ];
-        }
-    }
-    
-    // Method 5: Try using pinctrl
-    $cmd = "pinctrl get $psuPin 2>/dev/null | grep -o 'level=[01]' | cut -d= -f2";
-    $output = shell_exec($cmd);
-    if ($output !== null && trim($output) !== '') {
-        $value = trim($output);
-        if ($value === "0" || $value === "1") {
-            $methods[] = "pinctrl";
-            return [
-                'status' => $value === "1" ? 'on' : 'off',
-                'method' => 'pinctrl',
-                'pin' => $psuPin,
-                'raw_value' => $value
-            ];
-        }
-    }
-    
-    // Method 6: Check if we can read from old FPP GPIO API 
-    // Try to get pin information from FPP's GPIO manager
-    $fppGpioUrl = "http://localhost/api/gpio";
-    $fppResponse = @file_get_contents($fppGpioUrl);
-    if ($fppResponse) {
-        $methods[] = "fpp_gpio_api_old";
-        // For now, we know FPP controls it but can't read current state
-        return [
-            'status' => 'unknown',
-            'method' => 'fpp_gpio_api_old',
-            'pin' => $psuPin,
-            'note' => 'Pin controlled by FPP - old API method'
-        ];
-    }
-    
-    // Fallback: FPP controlled
-    $methods[] = "fpp_controlled";
-    return [
+
+    return array(
         'status' => 'unknown',
         'method' => 'fpp_controlled',
         'pin' => $psuPin,
-        'note' => 'GPIO controlled by FPP daemon - direct reading blocked',
-        'tried_methods' => $methods,
-        'suggestion' => 'Use FPP GPIO commands for reliable control and status tracking'
-    ];
+        'note' => 'State not known until the PSU has been switched on/off since FPP started',
+        'tried_methods' => $methods
+    );
 }
 
 // GET /api/plugin/fpp-DynamicPixels/psu/status
@@ -442,8 +381,8 @@ function fppDynamicPixelsGetPSUStatus() {
 
 // POST /api/plugin/fpp-DynamicPixels/psu/:psu/:action
 function fppDynamicPixelsControlPSU() {
-    $psuNumber = params('psu');
-    $action = params('action');
+    $psuNumber = strval(params('psu'));
+    $action = strtolower(params('action'));
     
     // Validate action
     if (!in_array($action, array('on', 'off'))) {
@@ -479,7 +418,7 @@ function fppDynamicPixelsControlPSU() {
         'gpiopin' => $targetPSU['gpiopin'],
         'success' => $gpioResult['success'],
         'timestamp' => date('Y-m-d H:i:s'),
-        'commandUrl' => "http://localhost/api/command/GPIO/{$targetPSU['gpiopin']}/{$action}"
+        'command' => "GPIO {$targetPSU['gpiopin']} " . ($action === 'on' ? 'On' : 'Off')
     );
     
     if (!$gpioResult['success']) {
@@ -493,7 +432,7 @@ function fppDynamicPixelsControlPSU() {
 
 // POST /api/plugin/fpp-DynamicPixels/psu/all/:action
 function fppDynamicPixelsControlAllPSUs() {
-    $action = params('action');
+    $action = strtolower(params('action'));
     
     // Validate action
     if (!in_array($action, array('on', 'off'))) {
@@ -515,7 +454,7 @@ function fppDynamicPixelsControlAllPSUs() {
             'psu' => $psuConfig['psu'],
             'gpiopin' => $psuConfig['gpiopin'],
             'success' => $gpioResult['success'],
-            'commandUrl' => "http://localhost/api/command/GPIO/{$psuConfig['gpiopin']}/{$action}"
+            'command' => "GPIO {$psuConfig['gpiopin']} " . ($action === 'on' ? 'On' : 'Off')
         );
         
         if (!$gpioResult['success']) {
@@ -613,9 +552,18 @@ function fppDynamicPixelsNetworkDiscover() {
             $isDynamicPixelsCandidate = true;
         }
         
-        // Try to get cape info from the primary address (first in list)
+        // Use an IPv4 address as the primary where possible.  MultiSync can also
+        // report IPv6 addresses which need bracketing in URLs and which FPP's
+        // /proxy/ passthrough (used by the UI for remote PSU control) doesn't support.
         $primaryAddress = $addresses[0];
-        $statsUrl = "http://{$primaryAddress}/api/statistics/usage";
+        foreach ($addresses as $addr) {
+            if (filter_var($addr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $primaryAddress = $addr;
+                break;
+            }
+        }
+        $urlAddress = filter_var($primaryAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? "[{$primaryAddress}]" : $primaryAddress;
+        $statsUrl = "http://{$urlAddress}/api/statistics/usage";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $statsUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -682,7 +630,7 @@ function fppDynamicPixelsNetworkDiscover() {
                     }
                     
                     // Get PSU status from this controller
-                    $psuStatusUrl = "http://{$primaryAddress}/api/plugin/fpp-plugin-DynamicPixels/psu/status";
+                    $psuStatusUrl = "http://{$urlAddress}/api/plugin/fpp-plugin-DynamicPixels/psu/status";
                     $ch = curl_init();
                     curl_setopt($ch, CURLOPT_URL, $psuStatusUrl);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

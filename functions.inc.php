@@ -4,7 +4,7 @@ include_once("/opt/fpp/www/common.php");
 $pluginName = basename(dirname(__FILE__));
 $pluginConfigFile = $settings['configDirectory'] . "/plugin." .$pluginName;
 
-$controllerPhysicalConfigFile = "./controllerPhysicalConfigs.json";
+$controllerPhysicalConfigFile = __DIR__ . "/controllerPhysicalConfigs.json";
 
 if (file_exists($pluginConfigFile)){
 	$pluginSettings = parse_ini_file($pluginConfigFile);
@@ -14,7 +14,9 @@ if (file_exists($pluginConfigFile)){
 
 
 if (file_exists($controllerPhysicalConfigFile)){
-	$controllerConfig = parse_ini_file($controllerPhysicalConfigFile);
+	$controllerConfig = json_decode(file_get_contents($controllerPhysicalConfigFile), true);
+	if (!is_array($controllerConfig))
+		$controllerConfig = array();
 }else{
 	$controllerConfig = array(); //There have been no settings saved by the user, create empty array
 }
@@ -115,7 +117,7 @@ function getDuration(){
 	return $maxDuration;
 }
 
-function ScrollText($host="127.0.0.1", $model, $msg, $Position, $Font, $FontSize="20", $color="#ffffff", $PPS="20", $AntiAlias="", $Duration="10", $autoenable="true") {
+function ScrollText($host, $model, $msg, $Position, $Font, $FontSize="20", $color="#ffffff", $PPS="20", $AntiAlias="", $Duration="10", $autoenable="true") {
         
     $data["command"] = "Overlay Model Effect";
     
@@ -155,14 +157,16 @@ function logEntry($data,$logLevel=1) {
 	global $logFile,$myPid, $LOG_LEVEL;
 
 	
-	if($logLevel <= $LOG_LEVEL) 
-		return
-		
-		$data = $_SERVER['PHP_SELF']." : [".$myPid."] ".$data;
-		
-		$logWrite= fopen($logFile, "a") or die("Unable to open file!");
-		fwrite($logWrite, date('Y-m-d h:i:s A',time()).": ".$data."\n");
-		fclose($logWrite);
+	if ($logLevel > $LOG_LEVEL || empty($logFile))
+		return;
+
+	$data = $_SERVER['PHP_SELF']." : [".$myPid."] ".$data;
+
+	$logWrite = @fopen($logFile, "a");
+	if ($logWrite === false)
+		return;
+	fwrite($logWrite, date('Y-m-d h:i:s A',time()).": ".$data."\n");
+	fclose($logWrite);
 }
 
 ?>

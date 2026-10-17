@@ -311,7 +311,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">GET</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/controller/info</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/controller/info</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Get information about the detected DynamicPixels controller<br>
@@ -322,7 +322,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">GET</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/network/discover</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/network/discover</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Discover all DynamicPixels controllers on the network<br>
@@ -333,7 +333,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">GET</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/version</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/version</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Get plugin version information<br>
@@ -345,7 +345,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">GET</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/psu/status</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/psu/status</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Get status of all PSUs on the detected controller<br>
@@ -356,7 +356,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">POST</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/psu/{psu_number}/{action}</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/psu/{psu_number}/{action}</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Control a specific PSU by number<br>
@@ -369,7 +369,7 @@ include_once(__DIR__ . '/logo_base64.php');
             <div class="api-endpoint">
                 <div>
                     <span class="api-method">POST</span>
-                    <span class="api-path">/api/plugin/fpp-DynamicPixels/psu/all/{action}</span>
+                    <span class="api-path">/api/plugin/fpp-plugin-DynamicPixels/psu/all/{action}</span>
                 </div>
                 <div class="api-description">
                     <strong>Description:</strong> Control all PSUs simultaneously<br>
@@ -384,22 +384,22 @@ include_once(__DIR__ . '/logo_base64.php');
                 <h4>cURL Examples:</h4>
                 <pre style="background: #fff; padding: 10px; border-radius: 3px; margin: 10px 0;">
 # Get controller information
-curl http://localhost/api/plugin/fpp-DynamicPixels/controller/info
+curl http://localhost/api/plugin/fpp-plugin-DynamicPixels/controller/info
 
 # Check PSU status
-curl http://localhost/api/plugin/fpp-DynamicPixels/psu/status
+curl http://localhost/api/plugin/fpp-plugin-DynamicPixels/psu/status
 
 # Turn on PSU 1
-curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/1/on
+curl -X POST http://localhost/api/plugin/fpp-plugin-DynamicPixels/psu/1/on
 
 # Turn off PSU 2
-curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/2/off
+curl -X POST http://localhost/api/plugin/fpp-plugin-DynamicPixels/psu/2/off
 
 # Turn off all PSUs
-curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/off
+curl -X POST http://localhost/api/plugin/fpp-plugin-DynamicPixels/psu/all/off
 
 # Turn on all PSUs
-curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/on</pre>
+curl -X POST http://localhost/api/plugin/fpp-plugin-DynamicPixels/psu/all/on</pre>
             </div>
 
             <h3>Response Format</h3>
@@ -414,7 +414,7 @@ curl -X POST http://localhost/api/plugin/fpp-DynamicPixels/psu/all/on</pre>
   "gpiopin": "1-0039-2",
   "success": true,
   "timestamp": "2025-10-11 14:30:25",
-  "commandUrl": "http://localhost/api/command/GPIO/1-0039-2/on"
+  "command": "GPIO 1-0039-2 On"
 }</pre>
             </div>
 

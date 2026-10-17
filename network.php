@@ -445,7 +445,7 @@ function renderControllers(systems) {
                             system.psuStatus.map(psu => {
                                 const statusClass = psu.status === 'on' ? 'psu-status-on' : 
                                                   psu.status === 'off' ? 'psu-status-off' : 'psu-status-unknown';
-                                const statusText = psu.status === 'unknown' ? 'UNK' : psu.status.toUpperCase();
+                                const statusText = (psu.status && psu.status !== 'unknown') ? psu.status.toUpperCase() : 'UNK';
                                 return `
                                     <div class="psu-status-item">
                                         <div class="psu-status-label">PSU ${psu.psu}</div>
@@ -532,6 +532,33 @@ function refreshNetworkData() {
         });
 }
 
+// Build a URL for an API call on another FPP instance.  Browsers block direct
+// requests to other hosts (FPP's Content-Security-Policy only allows 'self' and
+// FPP doesn't send CORS headers by default), so remote calls go through FPP's
+// same-origin /proxy/<ip>/ passthrough instead.
+function remoteApiUrl(address, path) {
+    if (address === window.location.hostname || address === 'localhost' || address === '127.0.0.1') {
+        return path;
+    }
+    return `/proxy/${address}${path}`;
+}
+
+function psuApiRequest(address, path) {
+    return fetch(remoteApiUrl(address, path), { method: 'POST' })
+        .then(response => response.text().then(text => {
+            let data = null;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error(`HTTP ${response.status} from ${address}: ${text.substring(0, 200)}`);
+            }
+            if (!response.ok && !data.error) {
+                data.error = `HTTP ${response.status}`;
+            }
+            return data;
+        }));
+}
+
 function togglePSU(address, psu, action, currentStatus) {
     // If turning off, confirm with user
     if (action === 'off') {
@@ -540,10 +567,7 @@ function togglePSU(address, psu, action, currentStatus) {
         }
     }
     
-    const url = `http://${address}/api/plugin/fpp-plugin-DynamicPixels/psu/${psu}/${action}`;
-    
-    fetch(url)
-        .then(response => response.json())
+    psuApiRequest(address, `/api/plugin/fpp-plugin-DynamicPixels/psu/${psu}/${action}`)
         .then(data => {
             if (data.success) {
                 console.log(`PSU ${psu} ${action} successful on ${address}`);
@@ -551,12 +575,12 @@ function togglePSU(address, psu, action, currentStatus) {
                 setTimeout(refreshNetworkData, 500);
             } else {
                 console.error(`PSU ${psu} ${action} failed on ${address}:`, data);
-                alert(`Failed to ${action} PSU ${psu}. Check console for details.`);
+                alert(`Failed to ${action} PSU ${psu} on ${address}: ${data.error || 'unknown error'}`);
             }
         })
         .catch(error => {
             console.error(`Error controlling PSU ${psu} on ${address}:`, error);
-            alert(`Error controlling PSU ${psu}. Check console for details.`);
+            alert(`Error controlling PSU ${psu} on ${address}: ${error.message}`);
         });
 }
 
@@ -568,10 +592,7 @@ function controlAllPSUs(address, action) {
         }
     }
     
-    const url = `http://${address}/api/plugin/fpp-plugin-DynamicPixels/psu/all/${action}`;
-    
-    fetch(url)
-        .then(response => response.json())
+    psuApiRequest(address, `/api/plugin/fpp-plugin-DynamicPixels/psu/all/${action}`)
         .then(data => {
             if (data.overallSuccess) {
                 console.log(`All PSUs ${action} successful on ${address}`);
@@ -579,10 +600,12 @@ function controlAllPSUs(address, action) {
                 setTimeout(refreshNetworkData, 500);
             } else {
                 console.error(`All PSUs ${action} failed on ${address}:`, data);
+                alert(`Failed to turn ${action} all PSUs on ${address}: ${data.error || 'one or more PSUs failed'}`);
             }
         })
         .catch(error => {
             console.error(`Error controlling all PSUs on ${address}:`, error);
+            alert(`Error controlling all PSUs on ${address}: ${error.message}`);
         });
 }
 

@@ -13,13 +13,15 @@
 			"maxFPPVersion": "7.5",
 			"branch": "fpp7",
 			"sha": ""
-		},		{
+		},
+		{
 			"minFPPVersion": "8.0",
-			"maxFPPVersion": "0",
+			"maxFPPVersion": "9.99",
 			"branch": "master",
-			"sha": ""
-		},		{
-			"minFPPVersion": "9.0",
+			"sha": "e77566c44306487451e0301ccdf3807c6de9d8c8"
+		},
+		{
+			"minFPPVersion": "10.0",
 			"maxFPPVersion": "0",
 			"branch": "master",
 			"sha": ""
