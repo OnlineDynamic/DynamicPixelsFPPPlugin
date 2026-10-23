@@ -16,6 +16,8 @@ rm -f libfpp-plugin-DynamicPixels.so src/*.o src/*.d
 # Add required Apache CSP (Content-Security-Policy allowed domains
 ${FPPDIR}/scripts/ManageApacheContentPolicy.sh add connect-src https://dynamicpixels.co.uk
 ${FPPDIR}/scripts/ManageApacheContentPolicy.sh add img-src https://dynamicpixels.co.uk
+${FPPDIR}/scripts/ManageApacheContentPolicy.sh add connect-src https://www.dynamicpixels.co.uk
+${FPPDIR}/scripts/ManageApacheContentPolicy.sh add img-src https://www.dynamicpixels.co.uk
 
 # install jq utility for PSU Control script to work
 sudo apt-get -y install jq
